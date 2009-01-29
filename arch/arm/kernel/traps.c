@@ -531,7 +531,11 @@ asmlinkage int arm_syscall(int no, struct pt_regs *regs)
 		if (has_tls_reg) {
 			asm ("mcr p15, 0, %0, c13, c0, 3"
 				: : "r" (regs->ARM_r0));
-		} else {
+		}
+#ifndef CONFIG_TLS_USERSPACE_EMUL
+		else
+#endif
+		{
 			/*
 			 * User space must never try to access this directly.
 			 * Expect your app to break eventually if you do so.

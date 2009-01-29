@@ -720,6 +720,13 @@ config TLS_REG_EMUL
 	  a few prototypes like that in existence) and therefore access to
 	  that required register must be emulated.
 
+config TLS_USERSPACE_EMUL
+	bool "Support for userspace TLS register emulation"
+	help
+	  This option will enable the userspace helper for the TLS register.
+	  May be useful for legacy devices that require backwards-compatibility
+	  with TLS-emulated userspace binaries.
+
 config NEEDS_SYSCALL_FOR_CMPXCHG
 	bool
 	help
