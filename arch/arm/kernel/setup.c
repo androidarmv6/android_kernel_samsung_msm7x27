@@ -732,15 +732,22 @@ static int __init parse_tag_revision(const struct tag *tag)
 
 __tagtable(ATAG_REVISION, parse_tag_revision);
 
-#ifndef CONFIG_CMDLINE_FORCE
 static int __init parse_tag_cmdline(const struct tag *tag)
 {
-	strlcpy(default_command_line, tag->u.cmdline.cmdline, COMMAND_LINE_SIZE);
+#if defined(CONFIG_CMDLINE_EXTEND)
+	strlcat(default_command_line, " ", COMMAND_LINE_SIZE);
+	strlcat(default_command_line, tag->u.cmdline.cmdline,
+		COMMAND_LINE_SIZE);
+#elif defined(CONFIG_CMDLINE_FORCE)
+	pr_warning("Ignoring tag cmdline (using the default kernel command line)\n");
+#else
+	strlcpy(default_command_line, tag->u.cmdline.cmdline,
+		COMMAND_LINE_SIZE);
+#endif
 	return 0;
 }
 
 __tagtable(ATAG_CMDLINE, parse_tag_cmdline);
-#endif /* CONFIG_CMDLINE_FORCE */
 
 /*
  * Scan the tag table for this tag, and call its parse function.
