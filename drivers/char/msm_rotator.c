@@ -84,6 +84,7 @@
 
 #define MAX_SESSIONS 16
 #define INVALID_SESSION -1
+#define MAX_DOWNSCALE_RATIO 3
 
 struct tile_parm {
 	unsigned int width;  /* tile's width */
@@ -326,7 +327,9 @@ static int msm_rotator_ycxcx_h2v1(struct msm_rotator_img_info *info,
 		}
 		iowrite32((1  << 18) | 		/* chroma sampling 1=H2V1 */
 			  (ROTATIONS_TO_BITMASK(info->rotations) << 9) |
-			  1 << 8,      		/* ROT_EN */
+			  1 << 8 |			/* ROT_EN */
+			  info->downscale_ratio << 2 |	/* downscale v ratio */
+			  info->downscale_ratio,	/* downscale h ratio */
 			  MSM_ROTATOR_SUB_BLOCK_CFG);
 		iowrite32(0 << 29 | 		/* frame format 0 = linear */
 			  (use_imem ? 0 : 1) << 22 | /* tile size */
@@ -483,7 +486,9 @@ static int msm_rotator_ycxcx_h2v2_tile(struct msm_rotator_img_info *info,
 		}
 		iowrite32((3  << 18) | 		/* chroma sampling 3=4:2:0 */
 			  (ROTATIONS_TO_BITMASK(info->rotations) << 9) |
-			  1 << 8,      		/* ROT_EN */
+			  1 << 8 |			/* ROT_EN */
+			  info->downscale_ratio << 2 |	/* downscale v ratio */
+			  info->downscale_ratio,	/* downscale h ratio */
 			  MSM_ROTATOR_SUB_BLOCK_CFG);
 		iowrite32(2 << 29 | 		/* frame format 2 = supertile */
 			  (use_imem ? 0 : 1) << 22 | /* tile size */
@@ -533,7 +538,9 @@ static int msm_rotator_ycrycb(struct msm_rotator_img_info *info,
 			  MSM_ROTATOR_OUT_PACK_PATTERN1);
 		iowrite32((1  << 18) | 		/* chroma sampling 1=H2V1 */
 			  (ROTATIONS_TO_BITMASK(info->rotations) << 9) |
-			  1 << 8,      		/* ROT_EN */
+			  1 << 8 |			/* ROT_EN */
+			  info->downscale_ratio << 2 |	/* downscale v ratio */
+			  info->downscale_ratio,	/* downscale h ratio */
 			  MSM_ROTATOR_SUB_BLOCK_CFG);
 		iowrite32(0 << 29 | 		/* frame format 0 = linear */
 			  (use_imem ? 0 : 1) << 22 | /* tile size */
@@ -578,7 +585,9 @@ static int msm_rotator_rgb_types(struct msm_rotator_img_info *info,
 		iowrite32(info->dst.width * bpp, MSM_ROTATOR_OUT_YSTRIDE1);
 		iowrite32((0  << 18) | 		/* chroma sampling 0=rgb */
 			  (ROTATIONS_TO_BITMASK(info->rotations) << 9) |
-			  1 << 8,      		/* ROT_EN */
+			  1 << 8 |			/* ROT_EN */
+			  info->downscale_ratio << 2 |	/* downscale v ratio */
+			  info->downscale_ratio,	/* downscale h ratio */
 			  MSM_ROTATOR_SUB_BLOCK_CFG);
 		switch (info->src.format) {
 		case MDP_RGB_565:
@@ -881,17 +890,26 @@ static int msm_rotator_start(unsigned long arg)
 	    (info.src.width > MSM_ROTATOR_MAX_W) ||
 	    (info.dst.height > MSM_ROTATOR_MAX_H) ||
 	    (info.dst.width > MSM_ROTATOR_MAX_W) ||
-	    ((info.src_rect.x + info.src_rect.w) > info.src.width) ||
-	    ((info.src_rect.y + info.src_rect.h) > info.src.height) ||
-	    ((info.rotations & MDP_ROT_90) &&
-		((info.dst_x + info.src_rect.h) > info.dst.width)) ||
-	    ((info.rotations & MDP_ROT_90) &&
-		((info.dst_y + info.src_rect.w) > info.dst.height)) ||
-	    (!(info.rotations & MDP_ROT_90) &&
-		((info.dst_x + info.src_rect.w) > info.dst.width)) ||
-	    (!(info.rotations & MDP_ROT_90) &&
-		((info.dst_y + info.src_rect.h) > info.dst.height)))
+	    (info.downscale_ratio > MAX_DOWNSCALE_RATIO)) {
+		pr_err("%s: Invalid parameters\n", __func__);
 		return -EINVAL;
+	}
+
+	if (info.rotations & MDP_ROT_90) {
+		dst_w = info.src_rect.h >> info.downscale_ratio;
+		dst_h = info.src_rect.w >> info.downscale_ratio;
+	} else {
+		dst_w = info.src_rect.w >> info.downscale_ratio;
+		dst_h = info.src_rect.h >> info.downscale_ratio;
+	}
+
+	if (checkoffset(info.src_rect.x, info.src_rect.w, info.src.width) ||
+	    checkoffset(info.src_rect.y, info.src_rect.h, info.src.height) ||
+	    checkoffset(info.dst_x, dst_w, info.dst.width) ||
+	    checkoffset(info.dst_y, dst_h, info.dst.height)) {
+		pr_err("%s: Invalid src or dst rect\n", __func__);
+		return -ERANGE;
+	}
 
 	switch (info.src.format) {
 	case MDP_RGB_565:

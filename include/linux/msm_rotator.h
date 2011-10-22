@@ -56,6 +56,7 @@ struct msm_rotator_img_info {
 	unsigned int    dst_y;
 	unsigned char   rotations;
 	int enable;
+	unsigned int	downscale_ratio;
 };
 
 struct msm_rotator_data_info {
