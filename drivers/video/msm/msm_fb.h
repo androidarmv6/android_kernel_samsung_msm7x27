@@ -174,6 +174,7 @@ void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl,
 struct platform_device *msm_fb_add_device(struct platform_device *pdev);
 
 int msm_fb_detect_client(const char *name);
+int calc_fb_offset(struct msm_fb_data_type *mfd, struct fb_info *fbi, int bpp);
 
 #ifdef CONFIG_FB_BACKLIGHT
 void msm_fb_config_backlight(struct msm_fb_data_type *mfd);
