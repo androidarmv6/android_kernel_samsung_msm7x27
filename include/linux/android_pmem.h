@@ -156,6 +156,24 @@ struct android_pmem_platform_data
 	unsigned buffered;
 	/* This PMEM is on memory that may be powered off */
 	unsigned unstable;
+	/*
+	 * function to be called when the number of allocations goes from
+	 * 0 -> 1
+	 */
+	void (*request_region)(void *);
+	/*
+	 * function to be called when the number of allocations goes from
+	 * 1 -> 0
+	 */
+	void (*release_region)(void *);
+	/*
+	 * function to be called upon pmem registration
+	 */
+	void *(*setup_region)(void);
+	/*
+	 * indicates that this region should be mapped/unmaped as needed
+	 */
+	int map_on_demand;
 };
 
 int pmem_setup(struct android_pmem_platform_data *pdata,
