@@ -60,6 +60,9 @@ extern int load_565rle_image_onfb( char *filename, int start_x, int start_y);
 #define MSM_FB_NUM  3
 #endif
 
+/*  Idle wakelock to prevent PC between wake up and Vsync */
+struct wake_lock mdp_idle_wakelock;
+
 static unsigned char *fbram;
 static unsigned char *fbram_phys;
 static int fbram_size;
@@ -445,6 +448,15 @@ static int msm_fb_remove(struct platform_device *pdev)
 
 	if (mfd->dma_hrtimer.function)
 		hrtimer_cancel(&mfd->dma_hrtimer);
+
+	if (mfd->msmfb_no_update_notify_timer.function)
+		del_timer(&mfd->msmfb_no_update_notify_timer);
+	complete(&mfd->msmfb_no_update_notify);
+	complete(&mfd->msmfb_update_notify);
+
+	/* Do this only for the primary panel */
+	if (mfd->fbi->node == 0)
+		wake_lock_destroy(&mdp_idle_wakelock);
 
 	/* remove /dev/fb* */
 	unregister_framebuffer(mfd->fbi);
@@ -1318,44 +1330,9 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 		return -EPERM;
 	}
 
-	#if 0 // minhyo - test screen
-	if (mfd->index == 0)
-	{
-		// draw frame
-		char    buff[256*2]={0,};
-		unsigned short *p;
-		#define SCREEN_WIDTH   256
-		int		x, y, width, height, i;
 
-		extern void lcd_disp_on_minhyodebug(void);
-		extern void lcd_ramwrite_minhyodebug(void);
-
-		// lcd_disp_on_minhyodebug();
-		// lcd_ramwrite_minhyodebug();
-
-		p = (unsigned short *)buff;
-		for(i=0; i < 80; i++)
-		{
-			// Red
-			p[i] = 0xF800;
-			// Green
-			p[i+80] = 0x07E0;
-			// Blue
-			p[i+160] = 0x001F;
-		}
-		x = 0;
-		y = 353;
-		width = 240;
-		height = 47;
-		
-		fbi->screen_base = fbi->screen_base + ( SCREEN_WIDTH * 2 * y) + (2 * x);
-		for(i = 0; i < height; i++)
-		{
-			memcpy(fbi->screen_base + (SCREEN_WIDTH * 2 * i), buff, SCREEN_WIDTH * 2);
-		}
-	}
-	#endif
-	
+	if (fbi->node == 0)
+		wake_lock_init(&mdp_idle_wakelock, WAKE_LOCK_IDLE, "mdp");
 
 	fbram += fix->smem_len;
 	fbram_phys += fix->smem_len;
