@@ -236,11 +236,9 @@ int mdp_lcdc_on(struct platform_device *pdev)
 #endif
 
 	ret = panel_next_on(pdev);
-	if (ret == 0) {
-		/* enable LCDC block */
-		MDP_OUTP(MDP_BASE + LCDC_BASE, 1);
+	if (ret == 0)
 		mdp_pipe_ctrl(MDP_OVERLAY0_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
-	}
+
 	/* MDP cmd block disable */
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 
@@ -323,7 +321,41 @@ void mdp4_overlay_lcdc_wait4vsync(struct msm_fb_data_type *mfd)
 	mdp_disable_irq(MDP_DMA2_TERM);
 }
 
-void mdp4_overlay_vsync_push(struct msm_fb_data_type *mfd,
+static void mdp4_overlay_lcdc_dma_busy_wait(struct msm_fb_data_type *mfd)
+{
+	unsigned long flag;
+	int need_wait = 0;
+
+	pr_debug("%s: start pid=%d\n", __func__, current->pid);
+
+	spin_lock_irqsave(&mdp_spin_lock, flag);
+	if (mfd->dma->busy == TRUE) {
+		INIT_COMPLETION(mfd->dma->comp);
+		need_wait++;
+	}
+	spin_unlock_irqrestore(&mdp_spin_lock, flag);
+
+	if (need_wait) {
+		/* wait until DMA finishes the current job */
+		pr_debug("%s: pending pid=%d\n", __func__, current->pid);
+		wait_for_completion(&mfd->dma->comp);
+	}
+	pr_debug("%s: done pid=%d\n", __func__, current->pid);
+}
+
+void mdp4_overlay_lcdc_start(void)
+{
+	if (!lcdc_enabled) {
+		/* enable LCDC block */
+		mdp4_iommu_attach();
+		mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+		MDP_OUTP(MDP_BASE + LCDC_BASE, 1);
+		mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+		lcdc_enabled = 1;
+	}
+}
+
+void mdp4_overlay_lcdc_vsync_push(struct msm_fb_data_type *mfd,
 			struct mdp4_overlay_pipe *pipe)
 {
 
