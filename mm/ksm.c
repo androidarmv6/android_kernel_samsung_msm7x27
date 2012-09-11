@@ -731,7 +731,7 @@ static int write_protect_page(struct vm_area_struct *vma, struct page *page,
 	if (!ptep)
 		goto out;
 
-	if (pte_write(*ptep)) {
+	if (pte_write(*ptep) || pte_dirty(*ptep)) {
 		pte_t entry;
 
 		swapped = PageSwapCache(page);
@@ -754,7 +754,9 @@ static int write_protect_page(struct vm_area_struct *vma, struct page *page,
 			set_pte_at(mm, addr, ptep, entry);
 			goto out_unlock;
 		}
-		entry = pte_wrprotect(entry);
+	
+		if (pte_dirty(entry)) set_page_dirty(page);
+		entry = pte_mkclean(pte_wrprotect(entry));
 		set_pte_at_notify(mm, addr, ptep, entry);
 	}
 	*orig_pte = *ptep;
@@ -817,6 +819,7 @@ static int replace_page(struct vm_area_struct *vma, struct page *page,
 	set_pte_at_notify(mm, addr, ptep, mk_pte(kpage, vma->vm_page_prot));
 
 	page_remove_rmap(page);
+	if (!page_mapped(page)) try_to_free_swap(page);
 	put_page(page);
 
 	pte_unmap_unlock(ptep, ptl);
@@ -1264,6 +1267,7 @@ static struct rmap_item *scan_get_next_rmap_item(struct page **page)
 
 	slot = ksm_scan.mm_slot;
 	if (slot == &ksm_mm_head) {
+		lru_add_drain_all();
 		root_unstable_tree = RB_ROOT;
 
 		spin_lock(&ksm_mmlist_lock);
@@ -1742,7 +1746,7 @@ static int ksm_memory_callback(struct notifier_block *self,
 		 * Keep it very simple for now: just lock out ksmd and
 		 * MADV_UNMERGEABLE while any memory is going offline.
 		 */
-		mutex_lock(&ksm_thread_mutex);
+		mutex_lock_nested(&ksm_thread_mutex, SINGLE_DEPTH_NESTING);
 		break;
 
 	case MEM_OFFLINE:
