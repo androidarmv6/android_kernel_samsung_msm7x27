@@ -1,0 +1,14 @@
+#
+# cooperuv module configuration
+#
+
+config COOPER_UNDERVOLT
+	tristate "Cooper undervolt"
+	help
+	  Say Y here if you want to build an undervolt module for Cooper
+
+	  If unsure, say N.
+
+	  To compile this module, choose M here: the
+	  module will be called Cooperuv.
+

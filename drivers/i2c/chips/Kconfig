@@ -1,0 +1,70 @@
+#
+# Miscellaneous I2C chip drivers configuration
+#
+# *** DEPRECATED! Do not add new entries! See Makefile ***
+#
+
+menu "Miscellaneous I2C Chip support"
+
+config SENSORS_MT9T013
+	tristate "MT9T013 Camera Driver"
+	depends on I2C
+	default n
+	help
+	 MT9T013 Camera Driver implemented by HTC.
+
+config AMP_MAX97000
+	bool "Maxim MAX97000 Amp Subsystem Driver"
+	depends on I2C 
+	default n
+
+config FSA9280
+	bool "Fairchild FSA9280 USB switch Driver"
+	depends on I2C
+	default y
+
+config SENSORS_BMA_ACCEL
+	tristate "BMA acceleration sensor support"
+	depends on I2C=y
+	default n
+	help
+	  If you say yes here you get support for Bosch Sensortec's 
+	  acceleration sensors BMA.
+
+config SENSORS_KR3D_ACCEL
+	tristate "KR3Dx acceleration sensor support"
+	depends on I2C=y
+	default n
+	help
+	  If you say yes here you get support for STMicro's 
+	  acceleration sensors KR3Dx.
+
+config SENSORS_MMC31XX
+	tristate "MEMSIC Magnetic Sensor Driver Support"
+	depends on I2C
+	default n
+	help
+	  If you say yes here you get support for the MEMSIC magnateic sensor	  
+
+config ECOMPASS
+	tristate "MEMSIC eCompass Sensor Driver Support"
+	depends on I2C
+	default n
+	help
+	  If you say yes here you get support for the MEMSIC magnateic sensor
+
+config SENSORS_GP2A
+	tristate "GP2A sensor support"
+	depends on I2C=y
+	default n
+	help
+	  If you say yes here you get support for Sharp's sensor GP2A.
+
+config SENSORS_TAOS
+	tristate "TAOS sensor support"
+	depends on I2C=y
+	default n
+	help
+	  If you say yes here you get support for TAOS's proximity sensor.
+
+endmenu
