@@ -2128,19 +2128,6 @@ static int msm72k_wakeup(struct usb_gadget *_gadget)
 	return 0;
 }
 
-#ifdef CONFIG_USB_SAMSUNG_VBUS_CHECK
-// Get current vabus state 
-static int msm72k_vbus_get_state(struct usb_gadget *_gadget)
-{
-	int b_session=0;
-	struct usb_info *ui = container_of(_gadget, struct usb_info, gadget);
-	struct msm_otg *otg = to_msm_otg(ui->xceiv);
-
-	b_session= is_b_sess_vld();
-	return b_session;
-}
-#endif 
-
 /* when Gadget is configured, it will indicate how much power
  * can be pulled from vbus, as specified in configuiration descriptor
  */
@@ -2189,9 +2176,6 @@ static const struct usb_gadget_ops msm72k_ops = {
 	.pullup		= msm72k_pullup,
 	.wakeup		= msm72k_wakeup,
 	.set_selfpowered = msm72k_set_selfpowered,
-#ifdef CONFIG_USB_SAMSUNG_VBUS_CHECK
-	.get_vbus_state = msm72k_vbus_get_state,
-#endif
 };
 
 static void usb_do_remote_wakeup(struct work_struct *w)

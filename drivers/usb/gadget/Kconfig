@@ -888,12 +888,6 @@ config USB_CSW_HACK
 	 This csw hack feature is for increasing the performance of the mass
 	 storage
 
-config USB_SAMSUNG_VBUS_CHECK
-	bool "samsung bug fix"
-	depends on USB_ANDROID
-	help 
-	  Samsung bug fix : Check Vbus state when notify usb_disconnect evnet
-
 config USB_ANDROID_MTP
 	boolean "Android MTP function"
 	depends on USB_ANDROID
