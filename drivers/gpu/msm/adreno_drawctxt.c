@@ -264,3 +264,4 @@ void adreno_drawctxt_switch(struct adreno_device *adreno_dev,
 	adreno_dev->drawctxt_active = drawctxt;
 	adreno_dev->gpudev->ctxt_restore(adreno_dev, drawctxt);
 }
+

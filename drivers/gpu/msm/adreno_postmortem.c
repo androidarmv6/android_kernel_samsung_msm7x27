@@ -876,3 +876,4 @@ int adreno_postmortem_dump(struct kgsl_device *device, int manual)
 
 	return 0;
 }
+

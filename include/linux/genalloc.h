@@ -19,27 +19,27 @@ void gen_pool_destroy(struct gen_pool *pool);
 
 unsigned long __must_check
 gen_pool_alloc_aligned(struct gen_pool *pool, size_t size,
-		       unsigned alignment_order);
+           unsigned alignment_order);
 
 /**
  * gen_pool_alloc() - allocate special memory from the pool
- * @pool:	Pool to allocate from.
- * @size:	Number of bytes to allocate from the pool.
+ * @pool:  Pool to allocate from.
+ * @size:  Number of bytes to allocate from the pool.
  *
  * Allocate the requested number of bytes from the specified pool.
- * Uses a first-fit algorithm.
- */
+ * Uses a first-fit algorith */
+
 static inline unsigned long __must_check
 gen_pool_alloc(struct gen_pool *pool, size_t size)
 {
-	return gen_pool_alloc_aligned(pool, size, 0);
+  return gen_pool_alloc_aligned(pool, size, 0);
 }
 
 void gen_pool_free(struct gen_pool *pool, unsigned long addr, size_t size);
 
 extern phys_addr_t gen_pool_virt_to_phys(struct gen_pool *pool, unsigned long);
 extern int gen_pool_add_virt(struct gen_pool *, unsigned long, phys_addr_t,
-			     size_t, int);
+           size_t, int);
 /**
  * gen_pool_add - add a new chunk of special memory to the pool
  * @pool: pool to add new memory chunk to
@@ -50,11 +50,11 @@ extern int gen_pool_add_virt(struct gen_pool *, unsigned long, phys_addr_t,
  *
  * Add a new chunk of special memory to the specified pool.
  *
- * Returns 0 on success or a -ve errno on failure.
- */
+ * Returns 0 on success or a -ve errno on failure. */
+
 static inline int __must_check gen_pool_add(struct gen_pool *pool, unsigned long addr,
-			       size_t size, int nid)
+             size_t size, int nid)
 {
-	return gen_pool_add_virt(pool, addr, -1, size, nid);
+  return gen_pool_add_virt(pool, addr, -1, size, nid);
 }
 #endif /* __GENALLOC_H__ */

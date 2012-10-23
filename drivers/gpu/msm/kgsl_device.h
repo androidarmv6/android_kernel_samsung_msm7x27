@@ -307,3 +307,4 @@ int kgsl_device_platform_probe(struct kgsl_device *device,
 void kgsl_device_platform_remove(struct kgsl_device *device);
 
 #endif  /* __KGSL_DEVICE_H */
+

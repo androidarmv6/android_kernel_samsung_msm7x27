@@ -67,3 +67,4 @@ void kgsl_cffdump_hang(enum kgsl_deviceid device_id);
 #endif /* CONFIG_MSM_KGSL_CFF_DUMP */
 
 #endif /* __KGSL_CFFDUMP_H */
+

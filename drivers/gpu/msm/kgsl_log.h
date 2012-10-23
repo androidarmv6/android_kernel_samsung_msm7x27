@@ -100,3 +100,4 @@ KGSL_LOG_CRIT(_dev->dev, _dev->pwr_log, fmt, ##args)
 pr_err("kgsl: %s: " fmt, __func__, ##args)
 
 #endif /* __KGSL_LOG_H */
+

@@ -85,3 +85,4 @@ void kgsl_core_debugfs_close(void)
 {
 	debugfs_remove_recursive(kgsl_debugfs_dir);
 }
+

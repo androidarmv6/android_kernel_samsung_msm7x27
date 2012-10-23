@@ -120,10 +120,10 @@ struct kgsl_ringbuffer {
 #define GSL_RB_WRITE(ring, gpuaddr, data) \
 	do { \
 		writel(data, ring); \
-		wmb(); \
 		kgsl_cffdump_setmem(gpuaddr, data, 4); \
 		ring++; \
 		gpuaddr += sizeof(uint); \
+		wmb(); \
 	} while (0)
 
 /* timestamp */

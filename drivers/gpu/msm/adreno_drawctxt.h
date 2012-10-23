@@ -149,3 +149,4 @@ static inline void calc_gmemsize(struct gmem_shadow_t *shadow, int gmem_size)
 }
 
 #endif  /* __ADRENO_DRAWCTXT_H */
+

@@ -337,3 +337,4 @@ void kgsl_pwrscale_close(struct kgsl_device *device)
 	kobject_put(&device->pwrscale_kobj);
 }
 EXPORT_SYMBOL(kgsl_pwrscale_close);
+

@@ -83,3 +83,4 @@ static inline unsigned int kgsl_pt_get_base_addr(struct kgsl_pagetable *pt)
 	return gpummu_pt->base.gpuaddr;
 }
 #endif /* __KGSL_GPUMMU_H */
+

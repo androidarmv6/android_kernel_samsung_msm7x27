@@ -315,8 +315,8 @@ void bitmap_clear(unsigned long *map, int start, int nr)
 }
 EXPORT_SYMBOL(bitmap_clear);
 
-/*
- * bitmap_find_next_zero_area_off - find a contiguous aligned zero area
+/**
+ * bitmap_find_next_zero_area - find a contiguous aligned zero area
  * @map: The address to base the search on
  * @size: The bitmap size in bits
  * @start: The bitnumber to start searching at
@@ -326,7 +326,7 @@ EXPORT_SYMBOL(bitmap_clear);
  *
  * The @align_mask should be one less than a power of 2; the effect is that
  * the bit offset of all zero areas this function finds plus @align_offset
- * s multiple of that power of 2.
+ * is multiple of that power of 2.
  */
 unsigned long bitmap_find_next_zero_area_off(unsigned long *map,
 					     unsigned long size,
@@ -643,7 +643,7 @@ static int __bitmap_parselist(const char *buf, unsigned int buflen,
 
 			if (!isdigit(c))
 				return -EINVAL;
-			
+
 			b = b * 10 + (c - '0');
 			if (!in_range)
 				a = b;
@@ -676,6 +676,7 @@ int bitmap_parselist(const char *bp, unsigned long *maskp, int nmaskbits)
 }
 EXPORT_SYMBOL(bitmap_parselist);
 
+
 /**
  * bitmap_parselist_user()
  *
@@ -701,6 +702,7 @@ int bitmap_parselist_user(const char __user *ubuf,
 					ulen, 1, maskp, nmaskbits);
 }
 EXPORT_SYMBOL(bitmap_parselist_user);
+
 
 /**
  * bitmap_pos_to_ord - find ordinal of set bit at given position in bitmap

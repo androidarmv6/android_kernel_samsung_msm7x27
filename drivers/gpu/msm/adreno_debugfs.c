@@ -453,3 +453,4 @@ void adreno_debugfs_init(struct kgsl_device *device)
 	debugfs_create_file("regs_enabled", 0644, pm_d_debugfs, device,
 			    &pm_regs_enabled_fops);
 }
+

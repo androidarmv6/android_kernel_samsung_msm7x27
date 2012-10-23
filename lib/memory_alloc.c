@@ -24,6 +24,7 @@
 
 
 #define MAX_MEMPOOLS 8
+#define PFN_ALIGN(x)	(((unsigned long)(x) + (PAGE_SIZE - 1)) & PAGE_MASK)
 
 struct mem_pool mpools[MAX_MEMPOOLS];
 
@@ -423,3 +424,4 @@ static int __init debugfs_mempool_init(void)
 }
 
 module_init(debugfs_mempool_init);
+

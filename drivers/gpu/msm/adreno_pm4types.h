@@ -191,3 +191,4 @@
 #define CP_REG(reg) ((0x4 << 16) | (SUBBLOCK_OFFSET(reg)))
 
 #endif	/* __ADRENO_PM4TYPES_H */
+

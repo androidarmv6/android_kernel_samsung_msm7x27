@@ -152,3 +152,4 @@ static inline unsigned int adreno_ringbuffer_inc_wrapped(unsigned int val,
 }
 
 #endif  /* __ADRENO_RINGBUFFER_H */
+

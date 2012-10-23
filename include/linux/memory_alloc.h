@@ -56,3 +56,4 @@ unsigned long memory_pool_node_len(void *vaddr);
 
 int memory_pool_init(void);
 #endif	/* _LINUX_MEMALLOC_H */
+

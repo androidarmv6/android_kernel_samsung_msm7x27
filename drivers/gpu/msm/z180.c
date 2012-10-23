@@ -951,3 +951,4 @@ MODULE_DESCRIPTION("2D Graphics driver");
 MODULE_VERSION("1.2");
 MODULE_LICENSE("GPL v2");
 MODULE_ALIAS("platform:kgsl_2d");
+
