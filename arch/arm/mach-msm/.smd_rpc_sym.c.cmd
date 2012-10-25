@@ -1,1 +1,0 @@
-cmd_/home/cas/git/AOKP/kernel/samsung/msm7x27/arch/arm/mach-msm/smd_rpc_sym.c := perl /home/cas/git/AOKP/kernel/samsung/msm7x27/arch/arm/mach-msm/mkrpcsym.pl /home/cas/git/AOKP/kernel/samsung/msm7x27/arch/arm/mach-msm/smd_rpc_sym /home/cas/git/AOKP/kernel/samsung/msm7x27/arch/arm/mach-msm/smd_rpc_sym.c
