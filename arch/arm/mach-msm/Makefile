@@ -13,7 +13,7 @@ ifndef CONFIG_ARCH_MSM8X60
 	endif
 endif
 
-obj-y += drop_caches.o
+#obj-y += drop_caches.o
 
 obj-$(CONFIG_ARCH_MSM_ARM11) += acpuclock.o timer.o
 obj-$(CONFIG_ARCH_MSM_SCORPION) += timer.o
