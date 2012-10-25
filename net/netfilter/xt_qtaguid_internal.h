@@ -328,4 +328,3 @@ struct proc_qtu_data {
 
 /*----------------------------------------------*/
 #endif  /* ifndef __XT_QTAGUID_INTERNAL_H__ */
-
