@@ -261,13 +261,7 @@ extern s16 (*nf_ct_nat_offset)(const struct nf_conn *ct,
 			       u32 seq);
 
 /* Fake conntrack entry for untracked connections */
-static inline struct nf_conn *nf_ct_untracked_get(void)
-{
-	extern struct nf_conn nf_conntrack_untracked;
-
-	return &nf_conntrack_untracked;
-}
-extern void nf_ct_untracked_status_or(unsigned long bits);
+extern struct nf_conn nf_conntrack_untracked;
 
 /* Iterate over all conntracks: if iter returns true, it's deleted. */
 extern void
@@ -295,9 +289,9 @@ static inline int nf_ct_is_dying(struct nf_conn *ct)
 	return test_bit(IPS_DYING_BIT, &ct->status);
 }
 
-static inline int nf_ct_is_untracked(const struct nf_conn *ct)
+static inline int nf_ct_is_untracked(const struct sk_buff *skb)
 {
-	return test_bit(IPS_UNTRACKED_BIT, &ct->status);
+	return (skb->nfct == &nf_conntrack_untracked.ct_general);
 }
 
 extern int nf_conntrack_set_hashsize(const char *val, struct kernel_param *kp);

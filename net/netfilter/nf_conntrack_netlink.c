@@ -480,7 +480,7 @@ ctnetlink_conntrack_event(unsigned int events, struct nf_ct_event *item)
 	int err;
 
 	/* ignore our fake conntrack entry */
-	if (nf_ct_is_untracked(ct))
+	if (ct == &nf_conntrack_untracked)
 		return 0;
 
 	if (events & (1 << IPCT_DESTROY)) {
@@ -2113,4 +2113,3 @@ static void __exit ctnetlink_exit(void)
 
 module_init(ctnetlink_init);
 module_exit(ctnetlink_exit);
-

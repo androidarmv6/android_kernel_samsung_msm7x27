@@ -60,7 +60,7 @@ static inline int nf_conntrack_confirm(struct sk_buff *skb)
 	struct nf_conn *ct = (struct nf_conn *)skb->nfct;
 	int ret = NF_ACCEPT;
 
-	if (ct && !nf_ct_is_untracked(ct)) {
+	if (ct && ct != &nf_conntrack_untracked) {
 		if (!nf_ct_is_confirmed(ct))
 			ret = __nf_conntrack_confirm(skb);
 		if (likely(ret == NF_ACCEPT))
@@ -77,4 +77,3 @@ print_tuple(struct seq_file *s, const struct nf_conntrack_tuple *tuple,
 extern spinlock_t nf_conntrack_lock ;
 
 #endif /* _NF_CONNTRACK_CORE_H */
-

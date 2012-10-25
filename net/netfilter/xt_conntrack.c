@@ -3,7 +3,7 @@
  *	information. (Superset of Rusty's minimalistic state match.)
  *
  *	(C) 2001  Marc Boucher (marc@mbsi.ca).
- *	Copyright � CC Computer Consultants GmbH, 2007 - 2008
+ *	Copyright © CC Computer Consultants GmbH, 2007 - 2008
  *
  *	This program is free software; you can redistribute it and/or modify
  *	it under the terms of the GNU General Public License version 2 as
@@ -123,12 +123,11 @@ conntrack_mt(const struct sk_buff *skb, struct xt_action_param *par,
 
 	ct = nf_ct_get(skb, &ctinfo);
 
-	if (ct) {
-		if (nf_ct_is_untracked(ct))
-			statebit = XT_CONNTRACK_STATE_UNTRACKED;
-		else
-			statebit = XT_CONNTRACK_STATE_BIT(ctinfo);
-	} else
+	if (ct == &nf_conntrack_untracked)
+		statebit = XT_CONNTRACK_STATE_UNTRACKED;
+	else if (ct != NULL)
+		statebit = XT_CONNTRACK_STATE_BIT(ctinfo);
+	else
 		statebit = XT_CONNTRACK_STATE_INVALID;
 
 	if (info->match_flags & XT_CONNTRACK_STATE) {
@@ -259,4 +258,3 @@ static void __exit conntrack_mt_exit(void)
 
 module_init(conntrack_mt_init);
 module_exit(conntrack_mt_exit);
-
