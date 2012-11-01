@@ -1778,7 +1778,7 @@ static struct platform_suspend_ops msm_pm_ops = {
 
 static uint32_t restart_reason = 0x776655AA;
 
-#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_GIO)
+#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)
 struct smem_info {
 	    unsigned int info;
 };
@@ -1795,7 +1795,7 @@ EXPORT_SYMBOL(set_recovery_mode_done);
 static void msm_pm_power_off(void)
 {
 	msm_rpcrouter_close();
-#if !defined(CONFIG_MACH_EUROPA) && !defined(CONFIG_MACH_CALLISTO) && !defined(CONFIG_MACH_COOPER) && !defined(CONFIG_MACH_BENI) && !defined(CONFIG_MACH_TASS) && !defined(CONFIG_MACH_LUCAS) && !defined(CONFIG_MACH_GIO)
+#if !defined(CONFIG_MACH_EUROPA) && !defined(CONFIG_MACH_CALLISTO) && !defined(CONFIG_MACH_COOPER) && !defined(CONFIG_MACH_GIO) && !defined(CONFIG_MACH_BENI) && !defined(CONFIG_MACH_TASS) && !defined(CONFIG_MACH_TASSDT) && !defined(CONFIG_MACH_LUCAS)
 	msm_proc_comm(PCOM_POWER_DOWN, 0, 0);
 #else
 	smem_flag->info = 0x0;
@@ -1813,7 +1813,7 @@ static void msm_pm_restart(char str, const char *cmd)
 	is_modem_reset = 1;
 	pr_err("is_modem_reset = %d\n",is_modem_reset);
 	msm_rpcrouter_close();
-#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_GIO)
+#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
 	smem_flag->info = 0x0;
 #endif
 	printk("send PCOM_RESET_CHIP\n");
@@ -1832,13 +1832,13 @@ static int msm_reboot_call
 		if (!strcmp(cmd, "bootloader")) {
 			restart_reason = 0x77665500;
 		} else if (!strcmp(cmd, "recovery")) {
-#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_GIO)
+#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS) 
 			set_recovery_mode();
 #endif
 			restart_reason = 0x77665502;
 		} else if (!strcmp(cmd, "recovery_done")) { 
             printk("recovery_done \n");
-#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_GIO)
+#if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS) 
             set_recovery_mode_done();
 #endif
 			restart_reason = 0x77665503;
@@ -1852,6 +1852,7 @@ static int msm_reboot_call
 		} else {
 			restart_reason = 0x77665501;
 		}
+	} else {
 	}
 	return NOTIFY_DONE;
 }

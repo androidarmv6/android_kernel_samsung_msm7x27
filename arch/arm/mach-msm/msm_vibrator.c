@@ -29,7 +29,7 @@
 #include <mach/vreg.h>
 #include <linux/delay.h>
 
-#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
+#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)
 extern int board_hw_revision;
 #endif
 
@@ -148,7 +148,7 @@ static int msm_vibrator_power(int on)
 #if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO)
 		ret = vreg_set_level(vreg_msm_vibrator, OUT3000mV);
 #else
-       	ret = vreg_set_level(vreg_msm_vibrator, OUT3100mV);
+       	ret = vreg_set_level(vreg_msm_vibrator, OUT3300mV);	//for GIO LDO19(from 3100 to 3300)
 #endif	
 		if(ret) {
 				printk(KERN_ERR "%s: vreg set level failed (%d)\n",

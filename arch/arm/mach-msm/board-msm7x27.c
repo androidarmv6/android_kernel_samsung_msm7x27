@@ -8,6 +8,8 @@
 #include "board-beni.c"
 #elif defined(CONFIG_MACH_TASS)
 #include "board-tass.c"
+#elif defined(CONFIG_MACH_TASSDT)
+#include "board-tassdt.c"
 #elif defined(CONFIG_MACH_LUCAS)
 #include "board-lucas.c"
 #elif defined(CONFIG_MACH_GIO)

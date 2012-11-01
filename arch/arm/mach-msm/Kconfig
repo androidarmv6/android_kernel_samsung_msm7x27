@@ -163,22 +163,6 @@ config MACH_COOPER
 	help
 	  Support for the Samsung Cooper board.
 
-config MACH_COOPER_CHN_CU
-	depends on ARCH_MSM7X27
-	depends on !MSM_STACKED_MEMORY
-	default n
-	bool "Cooper"
-	help
-	  Support for the Samsung Cooper CHN board.
-	  
-config MACH_BENI
-	depends on ARCH_MSM7X27
-	depends on !MSM_STACKED_MEMORY
-	default n
-	bool "Beni"
-	help
-	  Support for the Samsung Beni board.
-
 config MACH_GIO
 	depends on ARCH_MSM7X27
 	depends on !MSM_STACKED_MEMORY
@@ -187,6 +171,14 @@ config MACH_GIO
 	help
 	  Support for the Samsung Gio board.
 
+config MACH_BENI
+	depends on ARCH_MSM7X27
+	depends on !MSM_STACKED_MEMORY
+	default n
+	bool "Beni"
+	help
+	  Support for the Samsung Beni board.
+
 config MACH_TASS
 	depends on ARCH_MSM7X27
 	depends on !MSM_STACKED_MEMORY
@@ -194,14 +186,14 @@ config MACH_TASS
 	bool "Tass"
 	help
 	  Support for the Samsung Tass board.
-	  
-config MACH_TASS_CHN_CU
+
+config MACH_TASSDT
 	depends on ARCH_MSM7X27
 	depends on !MSM_STACKED_MEMORY
 	default n
-	bool "Tass"
+	bool "TassDT"
 	help
-	  Support for the Samsung Tass CHN board.
+	  Support for the Samsung TassDT board.
 
 config MACH_LUCAS
 	depends on ARCH_MSM7X27
@@ -209,18 +201,18 @@ config MACH_LUCAS
 	default n
 	bool "Lucas"
 	help
-	  Support for the Samsung Lucas board.	  	  
-	  
+	  Support for the Samsung Lucas board.	  
+
 config BOARD_REVISION
 	hex "Select H/W Revision"
-	depends on MACH_EUROPA || MACH_CALLISTO || MACH_COOPER || MACH_GIO || MACH_BENI || MACH_TASS || MACH_LUCAS || MACH_COOPER_CHN_CU || MACH_TASS_CHN_CU
+	depends on MACH_EUROPA || MACH_CALLISTO || MACH_COOPER || MACH_GIO || MACH_BENI || MACH_TASS || MACH_TASSDT || MACH_LUCAS
 	default "0x01"
 
 config 800MHZ
 	bool "use 800MHz mode"
 	default y
 	help
-	  Support for the only cooper board.
+	  Support for the only cooper & gio board.
 	  
 config MACH_TROUT
 	depends on ARCH_MSM7X01A
@@ -452,12 +444,11 @@ config PHYS_OFFSET
 	hex
 	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_CALLISTO
 	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_COOPER
-	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_COOPER_CHN_CU
-	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_TASS_CHN_CU
+	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_GIO	
 	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_BENI
 	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_TASS	
-	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_LUCAS
-	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_GIO	
+	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_TASSDT	
+	default "0x13600000" if !MSM_STACKED_MEMORY && MACH_LUCAS	
 	default "0x00200000" if !MSM_STACKED_MEMORY && MACH_EUROPA
 	default "0x00000000" if ARCH_QSD8X50 && MSM_SOC_REV_A
 	default "0x20000000" if ARCH_QSD8X50
@@ -1239,6 +1230,21 @@ choice
 		bool "Reset the entire chip"
 endchoice
 
+choice
+	prompt "TARGET LOCALE"
+	default TARGET_LOCALE_EUR_OPEN
+
+	config TARGET_LOCALE_EUR_OPEN
+		bool "EUR OPEN"
+		help
+		  Support EUR OPEN Board
+
+	config TARGET_LOCALE_AUS_TEL
+		bool "USA ATT"
+		help
+		  Support AUS Telstra Board
+endchoice
+
 config MSM_IDLE_WAIT_ON_MODEM
 	int "Wait for Modem to become ready for idle power collapse"
 	default 0
@@ -1388,4 +1394,33 @@ config BT_MSM_PINTEST
 	  Bluetooth MSM Pin Connectivity test module.
 	  This driver provides support for verifying the MSM to BT pin
 	  connectivity.
+
+config OVERCLOCK_AHB
+	bool "Overclock the AHB-bus with 50% for all frequencies from 480MHz and above."
+	default n
+	help
+	  Increases the speed of memory read/writes but can cause instability.
+	  If unsure, choose N.
+
 endif
+# [ Israel_NetQ 2011.06.30  For Israel B model
+config SAMSUNG_LTN_COMMON
+	bool "select Latin common"
+
+config SAMSUNG_TASS_LTN_L
+	bool "select Latin TASS L"
+	
+config SAMSUNG_TASS_LTN_B
+	bool "select Latin TASS B"
+
+config SAMSUNG_BENI_LTN_L
+	bool "select Latin BEIN L"
+	
+config SAMSUNG_BENI_LTN_B
+	bool "select Latin BENI B"
+
+config SAMSUNG_COOPER_LTN_L
+	bool "select Latin COOPER L"
+config SAMSUNG_COOPER_LTN_B
+	bool "select Latin COOPER L"
+# Israel_NetQ 2011.06.30  For Israel B model]

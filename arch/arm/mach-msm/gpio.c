@@ -395,7 +395,7 @@ void msm_gpio_enter_sleep(int from_idle)
 	int i;
 	struct tramp_gpio_smem *smem_gpio;
 
-#if defined(CONFIG_MACH_TASS)
+#if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
 	gpio_set_value( 34 , 1 ); 
 #endif
 
@@ -455,7 +455,7 @@ void msm_gpio_exit_sleep(void)
 	int i;
 	struct tramp_gpio_smem *smem_gpio;
 
-#if defined(CONFIG_MACH_TASS)
+#if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
 	gpio_set_value( 34 , 0 ); 
 #endif
 
