@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2008-2012, Code Aurora Forum. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -39,6 +39,7 @@
 #include "linux/proc_fs.h"
 
 #include <mach/hardware.h>
+#include <mach/msm_subsystem_map.h>
 #include <linux/io.h>
 #include <mach/board.h>
 
@@ -52,7 +53,10 @@
 #include <linux/wakelock.h>
 
 #include <linux/fb.h>
+#include <linux/list.h>
+#include <linux/types.h>
 
+#include <linux/msm_mdp.h>
 #ifdef CONFIG_HAS_EARLYSUSPEND
 #include <linux/earlysuspend.h>
 #endif
@@ -67,11 +71,57 @@ extern struct wake_lock mdp_idle_wakelock;
 #define MFD_KEY  0x11161126
 #define MSM_FB_MAX_DEV_LIST 32
 
+/********************************
+LCD_PANEL_ID   ZTE_LCD_LHT_20100611_001
+********************************/
+typedef enum {
+	LCD_PANEL_NOPANEL,
+	LCD_PANEL_P726_ILI9325C,
+	LCD_PANEL_P726_HX8347D,
+	LCD_PANEL_P726_S6D04M0X01,
+	LCD_PANEL_P722_HX8352A		=10,
+	LCD_PANEL_P727_HX8352A		=20,
+	LCD_PANEL_R750_ILI9481_1	=30,
+	LCD_PANEL_R750_ILI9481_2,
+	LCD_PANEL_R750_ILI9481_3,
+	LCD_PANEL_P729_TL2796		=40,
+	LCD_PANEL_P729_TFT_TRULY,
+	LCD_PANEL_P729_TFT_LEAD,
+	LCD_PANEL_P729_TFT_LEAD_CMI,
+	LCD_PANEL_P729_TFT_TRULY_LG,
+	LCD_PANEL_P729_TFT_LEAD_CASIO,
+	LCD_PANEL_V9_NT39416I		=50,
+	LCD_PANEL_4P3_NT35510		=60,
+	LCD_PANEL_4P3_HX8369A,
+	LCD_PANEL_3P8_NT35510_1		=70,
+	LCD_PANEL_3P8_NT35510_2,
+	LCD_PANEL_3P8_HX8363A,
+	LCD_PANEL_3P5_ILI9481_1		=80,
+	LCD_PANEL_3P5_ILI9481_2,
+	LCD_PANEL_3P5_R61581,
+	LCD_PANEL_2P6_HX8368A_1		=90,
+	LCD_PANEL_2P6_HX8368A_2,
+	LCD_PANEL_3P5_HX8369_LG		=100,
+	LCD_PANEL_3P5_HX8369_HYDIS,
+	LCD_PANEL_MAX
+} LCD_PANEL_ID;
+
 struct disp_info_type_suspend {
 	boolean op_enable;
 	boolean sw_refreshing_enable;
 	boolean panel_power_on;
 };
+
+struct msmfb_writeback_data_list {
+	struct list_head registered_entry;
+	struct list_head active_entry;
+	void *addr;
+	struct file *pmem_file;
+	struct msmfb_data buf_info;
+	struct msmfb_img img;
+	int state;
+};
+
 
 struct msm_fb_data_type {
 	__u32 key;
@@ -151,6 +201,7 @@ struct msm_fb_data_type {
 	__u32 var_xres;
 	__u32 var_yres;
 	__u32 var_pixclock;
+	__u32 var_frame_rate;
 
 #ifdef MSM_FB_ENABLE_DBGFS
 	struct dentry *sub_dir;
@@ -167,21 +218,58 @@ struct msm_fb_data_type {
 
 	struct clk *ebi1_clk;
 	boolean dma_update_flag;
+	struct timer_list msmfb_no_update_notify_timer;
+	struct completion msmfb_update_notify;
+	struct completion msmfb_no_update_notify;
+	struct mutex writeback_mutex;
+	struct mutex unregister_mutex;
+	struct list_head writeback_busy_queue;
+	struct list_head writeback_free_queue;
+	struct list_head writeback_register_queue;
+	wait_queue_head_t wait_q;
+	struct ion_client *iclient;
+	struct msm_mapped_buffer *map_buffer;
+	struct mdp_buf_type *ov0_wb_buf;
+	struct mdp_buf_type *ov1_wb_buf;
+	u32 ov_start;
+	u32 mem_hid;
+	u32 mdp_rev;
+	u32 use_ov0_blt, ov0_blt_state;
+	u32 use_ov1_blt, ov1_blt_state;
+	u32 writeback_state;
+	int cont_splash_done;
 };
 
 struct dentry *msm_fb_get_debugfs_root(void);
 void msm_fb_debugfs_file_create(struct dentry *root, const char *name,
 				u32 *var);
-void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl,
-				u32 save);
+void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl);
 
 struct platform_device *msm_fb_add_device(struct platform_device *pdev);
-
+struct fb_info *msm_fb_get_writeback_fb(void);
+int msm_fb_writeback_init(struct fb_info *info);
+int msm_fb_writeback_start(struct fb_info *info);
+int msm_fb_writeback_queue_buffer(struct fb_info *info,
+		struct msmfb_data *data);
+int msm_fb_writeback_dequeue_buffer(struct fb_info *info,
+		struct msmfb_data *data);
+int msm_fb_writeback_stop(struct fb_info *info);
+int msm_fb_writeback_terminate(struct fb_info *info);
 int msm_fb_detect_client(const char *name);
 int calc_fb_offset(struct msm_fb_data_type *mfd, struct fb_info *fbi, int bpp);
 
 #ifdef CONFIG_FB_BACKLIGHT
 void msm_fb_config_backlight(struct msm_fb_data_type *mfd);
+#endif
+
+void fill_black_screen(void);
+void unfill_black_screen(void);
+int msm_fb_check_frame_rate(struct msm_fb_data_type *mfd,
+				struct fb_info *info);
+
+#ifdef CONFIG_FB_MSM_LOGO
+#define INIT_IMAGE_FILE "/initlogo.rle"
+int load_565rle_image(char *filename, bool bf_supported);
 #endif
 
 #endif /* MSM_FB_H */

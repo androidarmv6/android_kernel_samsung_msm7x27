@@ -881,8 +881,8 @@ static int __init lcdc_s6d16a0x_panel_init(void)
 	pinfo = &s6d16a0x_panel_data.panel_info;
 	pinfo->xres = LCDC_FB_XRES;
 	pinfo->yres = LCDC_FB_YRES;
-	pinfo->height = 70; // minhyo-rgb888
-	pinfo->width = 42;  // minhyo-rgb888
+//	pinfo->height = 70; // minhyo-rgb888
+//	pinfo->width = 42;  // minhyo-rgb888
 	pinfo->type = LCDC_PANEL;
 	pinfo->pdest = DISPLAY_1;
 	pinfo->wait_cycle = 0;

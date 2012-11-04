@@ -1,7 +1,7 @@
 /* arch/arm/mach-msm/include/mach/board.h
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2008-2011, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2008-2010, Code Aurora Forum. All rights reserved.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -27,7 +27,6 @@
 #endif
 
 #include <asm/clkdev.h>
-
 /* platform device data structures */
 struct msm_acpu_clock_platform_data {
 	uint32_t acpu_switch_time_us;
@@ -56,7 +55,7 @@ struct msm_camera_io_clk {
 };
 
 struct msm_camera_device_platform_data {
-	int (*camera_gpio_on) (void);
+	void (*camera_gpio_on) (void);
 	void (*camera_gpio_off)(void);
 	struct msm_camera_io_ext ioext;
 	struct msm_camera_io_clk ioclk;
@@ -73,18 +72,6 @@ struct msm_camera_csi_params {
 	uint8_t settle_cnt;
 	uint8_t dpcm_scheme;
 };
-
-#if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
-	defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE) || \
-	defined(CONFIG_CRYPTO_DEV_QCEDEV) || \
-	defined(CONFIG_CRYPTO_DEV_QCEDEV_MODULE)
-
-struct msm_ce_hw_support {
-	uint32_t ce_shared;
-	uint32_t shared_ce_resource;
-	uint32_t hw_key_support;
-};
-#endif
 
 #ifdef CONFIG_SENSORS_MT9T013
 struct msm_camera_legacy_device_platform_data {
@@ -234,6 +221,17 @@ struct msm_adspdec_database {
 	struct dec_instance_table *dec_instance_list;
 };
 
+enum msm_mdp_hw_revision {
+        MDP_REV_20 = 1,
+        MDP_REV_22,
+        MDP_REV_30,
+        MDP_REV_303,
+        MDP_REV_31,
+        MDP_REV_40,
+        MDP_REV_41,
+        MDP_REV_42,
+};
+
 struct msm_panel_common_pdata {
 	uintptr_t hw_revision_addr;
 	int gpio;
@@ -249,6 +247,11 @@ struct msm_panel_common_pdata {
 #ifdef CONFIG_MSM_BUS_SCALING
 	struct msm_bus_scale_pdata *mdp_bus_scale_table;
 #endif
+        int mdp_rev;
+        u32 ov0_wb_size;  /* overlay0 writeback size */
+        u32 ov1_wb_size;  /* overlay1 writeback size */
+        u32 mem_hid;
+        char cont_splash_enabled;
 };
 
 struct lcdc_platform_data {
@@ -275,14 +278,40 @@ struct mddi_platform_data {
 };
 
 struct mipi_dsi_platform_data {
-	int vsync_gpio;
 	int (*dsi_power_save)(int on);
+	int (*dsi_client_reset)(void);
+	int (*get_lane_config)(void);
+	int target_type;
 };
 
+enum mipi_dsi_3d_ctrl {
+	FPGA_EBI2_INTF,
+	FPGA_SPI_INTF,
+};
+
+/* DSI PHY configuration */
+struct mipi_dsi_phy_ctrl {
+	uint32_t regulator[5];
+	uint32_t timing[12];
+	uint32_t ctrl[4];
+	uint32_t strength[4];
+	uint32_t pll[21];
+};
+
+struct mipi_dsi_panel_platform_data {
+	int fpga_ctrl_mode;
+	int fpga_3d_config_addr;
+	int *gpio;
+	struct mipi_dsi_phy_ctrl *phy_ctrl_settings;
+};
+
+#define PANEL_NAME_MAX_LEN 50
 struct msm_fb_platform_data {
 	int (*detect_client)(const char *name);
 	int mddi_prescan;
 	int (*allow_set_offset)(void);
+        char prim_panel_name[PANEL_NAME_MAX_LEN];
+        char ext_panel_name[PANEL_NAME_MAX_LEN];
 };
 
 struct msm_hdmi_platform_data {
@@ -290,7 +319,7 @@ struct msm_hdmi_platform_data {
 	int (*cable_detect)(int insert);
 	int (*comm_power)(int on, int show);
 	int (*enable_5v)(int on);
-	int (*core_power)(int on, int show);
+	int (*core_power)(int on);
 	int (*cec_power)(int on);
 	int (*init_irq)(void);
 };
@@ -317,17 +346,18 @@ enum msm_ssbi_controller_type {
 	MSM_SBI_CTRL_PMIC_ARBITER,
 };
 
-struct msm_ssbi_platform_data {
-	const char *rsl_id;
-	enum msm_ssbi_controller_type controller_type;
+struct msm_vidc_platform_data {
+	int memtype;
+	u32 enable_ion;
+	int disable_dmx;
+	int disable_fullhd;
+	u32 cp_enabled;
+#ifdef CONFIG_MSM_BUS_SCALING
+	struct msm_bus_scale_pdata *vidc_bus_client_pdata;
+#endif
+	int cont_mode_dpb_count;
 };
 
-#ifdef CONFIG_USB_PEHCI_HCD
-struct isp1763_platform_data {
-	unsigned reset_gpio;
-	int (*setup_gpio)(int enable);
-};
-#endif
 /* common init routines for use by arch/arm/mach-msm/board-*.c */
 
 void __init msm_add_devices(void);
@@ -358,10 +388,20 @@ void __init msm_snddev_init(void);
 void __init msm_snddev_init_timpani(void);
 void msm_snddev_poweramp_on(void);
 void msm_snddev_poweramp_off(void);
+void msm_snddev_voltage_on(void);
+void msm_snddev_voltage_off(void);
 void msm_snddev_hsed_voltage_on(void);
 void msm_snddev_hsed_voltage_off(void);
 void msm_snddev_tx_route_config(void);
 void msm_snddev_tx_route_deconfig(void);
+void msm_snddev_rx_route_config(void);
+void msm_snddev_rx_route_deconfig(void);
+void msm_snddev_enable_amic_power(void);
+void msm_snddev_disable_amic_power(void);
+void msm_snddev_enable_dmic_power(void);
+void msm_snddev_disable_dmic_power(void);
+void msm_snddev_enable_dmic_sec_power(void);
+void msm_snddev_disable_dmic_sec_power(void);
 
 extern unsigned int msm_shared_ram_phys; /* defined in arch/arm/mach-msm/io.c */
 
