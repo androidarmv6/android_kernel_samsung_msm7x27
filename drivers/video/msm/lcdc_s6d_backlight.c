@@ -6,7 +6,7 @@
  *    Description:  LCD Backlight control Function
  *
  *        Version:  1.0
- *        Created:  2010??11??25??15??21?38?
+ *        Created:  2010??11??25??15??21ë¶?38ì´?
  *       Revision:  1.0
  *       Compiler:  arm-linux-gcc
  *
@@ -151,7 +151,6 @@ struct brt_value brt_table_shp[] = {
 	  //{ MAX_BRIGHTNESS_VALUE,  27 }, // Max pulse 6(33-27) by HW
 	  { MAX_BRIGHTNESS_VALUE,  31 }, // Max pulse 2(33-31) by HW
 };
-
 #elif defined(CONFIG_MACH_BENI)
 struct brt_value brt_table_ktd[] = {
 		{ 0, 	1	}, // Off
@@ -273,38 +272,6 @@ struct brt_value brt_table_ktd[] = {
 		{ MAX_BRIGHTNESS_VALUE, 	25	}, // Max
 
 };
-#elif defined(CONFIG_MACH_TASSDT)
-struct brt_value brt_table_ktd[] = {
-		{ 0, 	1	}, // Off
-		{ 20, 	1	}, // Dimming
-		{ MIN_BRIGHTNESS_VALUE, 	1	}, // Min
-		{ 38, 	2	}, 
-		{ 40, 	3	}, 
-		{ 48, 	4	}, 
-		{ 58, 	5	}, 
-		{ 68, 	6	}, 
-		{ 78, 	7	}, 
-		{ 90, 	8	}, 	
-		{ 104, 	9	}, 
-		{ 114, 	10	}, 
-		{ 126, 	11	}, 
-		{ 136, 	12	}, 
-		{ 145, 	13	}, // default
-		{ 154, 	14	}, 
-		{ 162, 	15	}, 
-		{ 171, 	16	}, 
-		{ 179, 	17	},	
-		{ 187, 	18	}, 
-		{ 196, 	19	}, 
-		{ 204, 	20	}, 
-		{ 213,  21  },
-		{ 222,  22  },
-		{ 231,  23  }, 
-		{ 240, 	24	}, 
-		{ MAX_BRIGHTNESS_VALUE, 	25	}, // Max
-
-};
-
 #else // Default value is based on TASS Setting
 struct brt_value brt_table_ktd[] = {
 		{ 0, 	1	}, // Off
@@ -514,7 +481,6 @@ void lcdc_s6d_set_brightness_by_ktd259(int level)
 			}
 		}
 #endif
-
 		printk("Platform V:%d, Find V:%d\n",level, tune_level);
 
 		if(tune_level <= 0) {

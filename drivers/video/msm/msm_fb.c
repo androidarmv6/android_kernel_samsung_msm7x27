@@ -56,6 +56,10 @@ extern int load_565rle_image_onfb( char *filename, int start_x, int start_y);
 #endif
 #endif
 
+#ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
+#define MSM_FB_NUM  3
+#endif
+
 static unsigned char *fbram;
 static unsigned char *fbram_phys;
 static int fbram_size;
@@ -87,9 +91,6 @@ u32 msm_fb_msg_level = 7;
 
 /* Setting mddi_msg_level to 8 prints out ALL messages */
 u32 mddi_msg_level = 5;
-#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_TASS)
-extern char Sales_Code[3];
-#endif
 
 extern int32 mdp_block_power_cnt[MDP_MAX_BLOCK];
 extern unsigned long mdp_timer_duration;
@@ -319,7 +320,7 @@ static struct struct_frame_buf_mark  frame_buf_mark = {
 	.resY   = 480,
 	.bpp    = 24,
 #endif	
-#if defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
+#if defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS)
 	.resX   = 256,
 	.resY   = 320,
 	.bpp    = 18,
@@ -705,7 +706,7 @@ void msm_fb_set_backlight(struct msm_fb_data_type *mfd, __u32 bkl_lvl, u32 save)
 	}
 }
 
-#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)  || defined(CONFIG_MACH_GIO)
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS)
 struct msm_fb_data_type *cur_mfd;
 static void bckl_func(struct work_struct *ignored); 
 static DECLARE_DELAYED_WORK(bckl_work, bckl_func);
@@ -718,9 +719,6 @@ static void bckl_func(struct work_struct *ignored)
 
 #if defined(CONFIG_MACH_LUCAS)
 static bool first_boot = 1;
-#endif
-#if defined(CONFIG_MACH_TASSDT)
-#define GPIO_LCD_DET 21
 #endif
 #if defined(CONFIG_MACH_TASS)
 #define GPIO_LCD_DET 94 
@@ -762,7 +760,7 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			if (ret == 0) {
 				mfd->panel_power_on = TRUE;
 
-#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)  || defined(CONFIG_MACH_GIO)
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS)
 			cur_mfd = mfd;
 			schedule_delayed_work(&bckl_work, 10);
 #else
@@ -797,9 +795,9 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			mfd->panel_power_on = FALSE;
 
 			msleep(16);
-#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)  || defined(CONFIG_MACH_GIO)
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS)
 			msm_fb_set_backlight(mfd, 0, 0);
-#if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
+#if defined(CONFIG_MACH_TASS)
 			//ESD Detection IRQ diabled
                         disable_irq(MSM_GPIO_TO_INT(GPIO_LCD_DET));
 			printk("%s, TASS LCD off start, DISABLE ESD IRQ.\n",__func__);
@@ -1308,17 +1306,12 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 // 20100909 hongkuk.son for COOPER.rle ( booting logo )
 	// if (!load_565rle_image_onfb( "CALLISTO.rle",0,0)) ;	/* Flip buffer */
 
-#if defined(CONFIG_MACH_COOPER)
-#if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
-	if (!load_565rle_image_onfb( "COOPERT.rle",0,0)) ;	/* Flip buffer */
-#else
-	if((strncmp(Sales_Code, "THL" ,3)==0)) {
-		if (!load_565rle_image_onfb( "COOPER_THAI.rle",0,0)) ;	
-	} else {
-		if (!load_565rle_image_onfb( "COOPER.rle",0,0)) ;	
-	}
+#if defined(CONFIG_MACH_COOPER_CHN_CU)
+	if (!load_565rle_image_onfb( "COOPERCU.rle",0,0)) ;	/* Flip buffer */
+#elif  defined(CONFIG_MACH_COOPER) && !defined(CONFIG_MACH_COOPER_CHN_CU)	
+    if (!load_565rle_image_onfb( "COOPER.rle",0,0)) ;	/* Flip buffer */
 #endif	
-#endif
+
 #if defined(CONFIG_MACH_GIO)
 	if (!load_565rle_image_onfb( "GIO.rle",0,0)) ;	/* Flip buffer */
 #endif
@@ -1327,19 +1320,10 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	if (!load_565rle_image_onfb( "BENI.rle",0,0)) ;	/* Flip buffer */
 #endif	
 
-#if defined(CONFIG_MACH_TASS)
-	if ( strncmp ( Sales_Code, "HUI", 3 ) == 0 )
-	{
-		if (!load_565rle_image_onfb( "TASS-HUI.rle",0,0)) ;
-	}
-	else
-	{
-		if (!load_565rle_image_onfb( "TASS.rle",0,0)) ;
-	}
-#endif	
-
-#if defined(CONFIG_MACH_TASSDT)
-	if (!load_565rle_image_onfb( "TASS-X.rle",0,0)) ;	/* Flip buffer */
+#if defined(CONFIG_MACH_TASS_CHN_CU)
+	if (!load_565rle_image_onfb( "TASSCU.rle",0,0)) ;	/* Flip buffer */
+#elif 	 defined(CONFIG_MACH_TASS) && !defined(CONFIG_MACH_TASS_CHN_CU)	
+    if (!load_565rle_image_onfb( "TASS.rle",0,0)) ;	/* Flip buffer */
 #endif	
 
 #if defined(CONFIG_MACH_LUCAS)
@@ -2660,6 +2644,7 @@ static int msmfb_overlay_commit(struct fb_info *info, unsigned long *argp)
   return mdp4_overlay_commit(info, ndx);
 }
 
+
 static int msmfb_overlay_play(struct fb_info *info, unsigned long *argp)
 {
 	int	ret;
@@ -3077,6 +3062,23 @@ struct platform_device *msm_fb_add_device(struct platform_device *pdev)
 	if (!pdata)
 		return NULL;
 	type = pdata->panel_info.type;
+
+#if defined MSM_FB_NUM
+
+	/*
+   	 * over written fb_num which defined
+  	 * at panel_info
+   	 *
+   	*/
+  	if (type == HDMI_PANEL || type == DTV_PANEL || type == TV_PANEL)
+    		pdata->panel_info.fb_num = 1;
+  	else
+    		pdata->panel_info.fb_num = MSM_FB_NUM;
+
+  	MSM_FB_INFO("setting pdata->panel_info.fb_num to %d. type: %d\n",
+      		pdata->panel_info.fb_num, type);
+#endif
+
 	fb_num = pdata->panel_info.fb_num;
 
 	if (fb_num <= 0)

@@ -43,11 +43,15 @@ static void memset16_rgb8888(void *_ptr, unsigned short val, unsigned count)
 	unsigned short red; 
 	unsigned short green;
 	unsigned short blue;
-	
+#if defined(CONFIG_MACH_TASS_CHN_CU) || defined(CONFIG_MACH_COOPER_CHN_CU)
+	blue = (val & 0xF800) >> 8;
+	red = ( val & 0x7E0) >> 3;
+	green = (val & 0x1F) << 3;
+#else
 	red = ( val & 0xF800) >> 8;
 	green = (val & 0x7E0) >> 3;
 	blue = (val & 0x1F) << 3;
-
+#endif
 	count >>= 1;
 	while (count--)
 	{
@@ -64,7 +68,7 @@ int load_565rle_image_onfb( char *filename, int start_x, int start_y)
 	unsigned count, max;
 	unsigned short *data, *bits, *ptr;
 	struct fb_info *info;
-#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER)  || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)
+#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
 	unsigned short *p_line; // minhyo0512
 	unsigned short sp, c_pixel; // minhyo0512
 	unsigned draw_pixel;
@@ -104,12 +108,13 @@ int load_565rle_image_onfb( char *filename, int start_x, int start_y)
 
 	max = fb_width(info) * fb_height(info);
 
+
 	ptr = data;
 	bits = (unsigned short *)(info->screen_base+(info->fix.line_length*start_y) );
 //	printk("====minhyodebug:info->fix.line_length=%d, \n", info->fix.line_length);
 //	printk("====minhyodebug:max=fb_wid x fb_height : %d x %d = %d\n", fb_width(info), fb_height(info), max);
 
-#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
+#if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS)
 	p_line = bits;
 	sp = 0; // start pixel in Line
 	while (count > 3) {
@@ -122,7 +127,7 @@ int load_565rle_image_onfb( char *filename, int start_x, int start_y)
 		{
 #if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO)
 		if(sp == 320) // 20100909 hongkuk.son for COOPER.rle ( booting logo )
-#elif defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
+#elif defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS)
 			if(sp == 240)
 #endif
 			{
@@ -131,10 +136,10 @@ int load_565rle_image_onfb( char *filename, int start_x, int start_y)
 				sp = 0;
 			}
 
-#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO)		 	
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO)			
 			if( (sp + draw_pixel) >= 320) // 20100909 hongkuk.son for COOPER.rle ( booting logo )
 				c_pixel = 320 - sp; // 20100909 hongkuk.son for COOPER.rle ( booting logo )
-#elif defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
+#elif defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS)
 			if( (sp + draw_pixel) >= 240)
 				c_pixel = 240 - sp;
 #endif
@@ -142,9 +147,9 @@ int load_565rle_image_onfb( char *filename, int start_x, int start_y)
 				c_pixel = draw_pixel;
 
 			// draw pixels
-           #if defined(CONFIG_FB_MSM_DEFAULT_DEPTH_ARGB8888) || defined(CONFIG_FB_MSM_DEFAULT_DEPTH_RGBA8888) // minhyo-rgb888
+           #if 1 // minhyo-rgb888
 		memset16_rgb8888(&p_line[sp*2], ptr[1], c_pixel<<1);
-           #else // CONFIG_FB_MSM_DEFAULT_DEPTH_RGB565
+           #else
            memset16(&p_line[sp], ptr[1], c_pixel<<1);
            #endif
 			

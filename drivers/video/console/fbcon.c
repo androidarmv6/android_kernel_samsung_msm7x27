@@ -3527,7 +3527,7 @@ static void fbcon_exit(void)
 #define FB_Y_SIZE	480
 #elif defined(CONFIG_MACH_LUCAS)
 #define FB_Y_SIZE	400
-#elif defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
+#elif defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS)
 #define FB_Y_SIZE	320
 #endif
 static unsigned long fbaddr = 0L;

@@ -129,6 +129,9 @@
 #define	RDID2			0xDB		// 2 parameters
 #define	RDID3			0xDC		// 2 parameters
 
+int lcd_on_state_for_debug;
+EXPORT_SYMBOL(lcd_on_state_for_debug);
+
 struct setting_table {
 	unsigned char command;	
 	unsigned char parameters;
@@ -607,6 +610,7 @@ static void s6d04m0_disp_on(void)
 
 		//mdelay(1);
 		s6d04m0_state.display_on = TRUE;
+		lcd_on_state_for_debug = TRUE;
 	}
 }
 
@@ -655,6 +659,7 @@ static int lcdc_s6d04m0_panel_off(struct platform_device *pdev)
 		
 		lcdc_s6d04m0_pdata->panel_config_gpio(0);
 		s6d04m0_state.display_on = FALSE;
+		lcd_on_state_for_debug = FALSE;
 		s6d04m0_state.disp_initialized = FALSE;
 		s6d04m0_disp_powerdown();
 	}
