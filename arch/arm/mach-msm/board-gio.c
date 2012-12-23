@@ -1877,21 +1877,9 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_gadget_peripheral,
 #endif
 #endif
-
-#ifdef CONFIG_USB_FUNCTION
-	&msm_device_hsusb_peripheral,
-	&mass_storage_device,
+#ifdef CONFIG_USB_G_ANDROID
+        &android_usb_device,
 #endif
-
-#ifdef CONFIG_USB_ANDROID
-	&usb_mass_storage_device,
-	&rndis_device,
-#ifdef CONFIG_USB_ANDROID_DIAG
-	&usb_diag_device,
-#endif
-	&android_usb_device,
-#endif
-
 	&msm_wlan_pm_device,
 
 	&msm_device_i2c,
