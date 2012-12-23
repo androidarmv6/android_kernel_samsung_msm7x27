@@ -38,6 +38,7 @@
 #include <linux/usb/gadget.h>
 #include <linux/switch.h>
 
+#define USB_GADGET_DELAYED_STATUS       0x7fff  /* Impossibly large value */
 
 struct usb_composite_dev;
 struct usb_configuration;
@@ -242,58 +243,27 @@ struct usb_configuration {
 };
 
 int usb_add_config(struct usb_composite_dev *,
-		struct usb_configuration *);
+                struct usb_configuration *,
+                int (*)(struct usb_configuration *));
 
-/**
- * struct usb_composite_driver - groups configurations into a gadget
- * @name: For diagnostics, identifies the driver.
- * @dev: Template descriptor for the device, including default device
- *	identifiers.
- * @strings: tables of strings, keyed by identifiers assigned during bind()
- *	and language IDs provided in control requests
- * @bind: (REQUIRED) Used to allocate resources that are shared across the
- *	whole device, such as string IDs, and add its configurations using
- *	@usb_add_config().  This may fail by returning a negative errno
- *	value; it should return zero on successful initialization.
- * @unbind: Reverses @bind(); called as a side effect of unregistering
- *	this driver.
- * @suspend: Notifies when the host stops sending USB traffic,
- *	after function notifications
- * @resume: Notifies configuration when the host restarts USB traffic,
- *	before function notifications
- *
- * Devices default to reporting self powered operation.  Devices which rely
- * on bus powered operation should report this in their @bind() method.
- *
- * Before returning from @bind, various fields in the template descriptor
- * may be overridden.  These include the idVendor/idProduct/bcdDevice values
- * normally to bind the appropriate host side driver, and the three strings
- * (iManufacturer, iProduct, iSerialNumber) normally used to provide user
- * meaningful device identifiers.  (The strings will not be defined unless
- * they are defined in @dev and @strings.)  The correct ep0 maxpacket size
- * is also reported, as defined by the underlying controller driver.
- */
+int usb_remove_config(struct usb_composite_dev *,
+                struct usb_configuration *);
+
 struct usb_composite_driver {
-	const char				*name;
-	const struct usb_device_descriptor	*dev;
-	struct usb_gadget_strings		**strings;
+        const char                              *name;
+        const char                              *iProduct;
+        const char                              *iManufacturer;
+        const struct usb_device_descriptor      *dev;
+        struct usb_gadget_strings               **strings;
+        unsigned                needs_serial:1;
 
-	struct class		*class;
-	atomic_t		function_count;
+        int                     (*unbind)(struct usb_composite_dev *);
 
-	/* REVISIT:  bind() functions can be marked __init, which
-	 * makes trouble for section mismatch analysis.  See if
-	 * we can't restructure things to avoid mismatching...
-	 */
+        void                    (*disconnect)(struct usb_composite_dev *);
 
-	int			(*bind)(struct usb_composite_dev *);
-	int			(*unbind)(struct usb_composite_dev *);
-
-	/* global suspend hooks */
-	void			(*suspend)(struct usb_composite_dev *);
-	void			(*resume)(struct usb_composite_dev *);
-
-	void			(*enable_function)(struct usb_function *f, int enable);
+        /* global suspend hooks */
+        void                    (*suspend)(struct usb_composite_dev *);
+        void                    (*resume)(struct usb_composite_dev *);
 };
 
 extern int usb_composite_register(struct usb_composite_driver *);
@@ -333,37 +303,37 @@ extern void usb_composite_unregister(struct usb_composite_driver *);
  * (h) more, TBD.
  */
 struct usb_composite_dev {
-	struct usb_gadget		*gadget;
-	struct usb_request		*req;
-	unsigned			bufsiz;
+        struct usb_gadget               *gadget;
+        struct usb_request              *req;
+        unsigned                        bufsiz;
 
-	struct usb_configuration	*config;
+        struct usb_configuration        *config;
 
-	/* private: */
-	/* internals */
-	unsigned int			suspended:1;
-	struct usb_device_descriptor	desc;
-	struct list_head		configs;
-	struct usb_composite_driver	*driver;
-	u8				next_string_id;
+        /* private: */
+        /* internals */
+        unsigned int                    suspended:1;
+        struct usb_device_descriptor    desc;
+        struct list_head                configs;
+        struct usb_composite_driver     *driver;
+        u8                              next_string_id;
+        u8                              manufacturer_override;
+        u8                              product_override;
+        u8                              serial_override;
 
-	/* the gadget driver won't enable the data pullup
-	 * while the deactivation count is nonzero.
-	 */
-	unsigned			deactivations;
+        /* the gadget driver won't enable the data pullup
+         * while the deactivation count is nonzero.
+         */
+        unsigned                        deactivations;
 
-	/* protects at least deactivation count */
-	spinlock_t			lock;
+        /* the composite driver won't complete the control transfer's
+         * data/status stages till delayed_status is zero.
+         */
+        int                             delayed_status;
 
-	/* switch indicating connected/disconnected state */
-	struct switch_dev		sw_connected;
-	/* switch indicating current configuration */
-	struct switch_dev		sw_config;
-	/* current connected state for sw_connected */
-	bool				connected;
-
-	struct work_struct switch_work;
+        /* protects deactivations and delayed_status counts*/
+        spinlock_t                      lock;
 };
+
 
 extern int usb_string_id(struct usb_composite_dev *c);
 
