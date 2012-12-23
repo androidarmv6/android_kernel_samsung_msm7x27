@@ -23,7 +23,7 @@
 #include <linux/delay.h>
 #include <linux/bootmem.h>
 //#include <linux/usb/mass_storage_function.h>
-#include <linux/stab.h>
+#include <linux/slab.h>
 #include <linux/power_supply.h>
 #include <linux/gpio_event.h>
 #include <linux/i2c-gpio.h>
