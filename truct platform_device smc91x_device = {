@@ -1,0 +1,636 @@
+[1mdiff --git a/arch/arm/mach-msm/board-beni.c b/arch/arm/mach-msm/board-beni.c[m
+[1mindex 20e5309..3d60615 100755[m
+[1m--- a/arch/arm/mach-msm/board-beni.c[m
+[1m+++ b/arch/arm/mach-msm/board-beni.c[m
+[36m@@ -23,6 +23,7 @@[m
+ #include <linux/delay.h>[m
+ #include <linux/bootmem.h>[m
+ //#include <linux/usb/mass_storage_function.h>[m
+[32m+[m[32m#include <linux/slab.h>[m
+ #include <linux/power_supply.h>[m
+ #include <linux/gpio_event.h>[m
+ #include <linux/i2c-gpio.h>[m
+[36m@@ -62,6 +63,11 @@[m
+ #include <linux/android_pmem.h>[m
+ #include <mach/camera.h>[m
+ [m
+[32m+[m[32m#ifdef CONFIG_USB_G_ANDROID[m
+[32m+[m[32m#include <linux/usb/android.h>[m
+[32m+[m[32m#include <mach/usbdiag.h>[m
+[32m+[m[32m#endif[m
+[32m+[m
+ #include "devices.h"[m
+ #include "clock.h"[m
+ #include "msm-keypad-devices.h"[m
+[36m@@ -74,10 +80,6 @@[m
+ #include <linux/msm_kgsl.h>[m
+ #endif[m
+ [m
+[31m-#ifdef CONFIG_USB_ANDROID[m
+[31m-#include <linux/usb/android_composite.h>[m
+[31m-#endif[m
+[31m-[m
+ #ifdef CONFIG_SENSORS_BMA_ACCEL[m
+ #include <linux/i2c/bma023_dev.h>[m
+ #endif[m
+[36m@@ -276,237 +278,6 @@[m [mstatic struct resource smc91x_resources[] = {[m
+ 	},[m
+ };[m
+ [m
+[31m-#ifdef CONFIG_USB_FUNCTION[m
+[31m-static struct usb_mass_storage_platform_data usb_mass_storage_pdata = {[m
+[31m-	.nluns          = 0x02,[m
+[31m-	.buf_size       = 16384,[m
+[31m-	.vendor         = "GOOGLE",[m
+[31m-	.product        = "Mass storage",[m
+[31m-	.release        = 0xffff,[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device mass_storage_device = {[m
+[31m-	.name           = "usb_mass_storage",[m
+[31m-	.id             = -1,[m
+[31m-	.dev            = {[m
+[31m-		.platform_data          = &usb_mass_storage_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID[m
+[31m-static char *usb_functions_default[] = {[m
+[31m-	"usb_mass_storage",[m
+[31m-};[m
+[31m-[m
+[31m-static char *usb_functions_default_adb[] = {[m
+[31m-	"adb",[m
+[31m-	"acm",[m
+[31m-	"diag",[m
+[31m-	"usb_mass_storage",[m
+[31m-};[m
+[31m-[m
+[31m-static char *usb_functions_rndis[] = {[m
+[31m-	"rndis",[m
+[31m-};[m
+[31m-[m
+[31m-static char *usb_functions_all[] = {[m
+[31m-#ifdef CONFIG_USB_ANDROID_ACM[m
+[31m-	"acm",[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID_DIAG[m
+[31m-	"diag",[m
+[31m-#endif[m
+[31m-	"usb_mass_storage",[m
+[31m-	"adb",[m
+[31m-#ifdef CONFIG_USB_F_SERIAL[m
+[31m-	"modem",[m
+[31m-	"nmea",[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID_RMNET[m
+[31m-	"rmnet",[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID_RNDIS[m
+[31m-	"rndis",[m
+[31m-#endif[m
+[31m-};[m
+[31m-[m
+[31m-static struct android_usb_product usb_products[] = {[m
+[31m-	{[m
+[31m-		.product_id         = 0x6881,[m
+[31m-		.num_functions	= ARRAY_SIZE(usb_functions_rndis),[m
+[31m-		.functions	= usb_functions_rndis,[m
+[31m-	},[m
+[31m-	{[m
+[31m-		.product_id	= 0x689e,[m
+[31m-		.num_functions	= ARRAY_SIZE(usb_functions_default_adb),[m
+[31m-		.functions	= usb_functions_default_adb,[m
+[31m-	},[m
+[31m-	{[m
+[31m-		.product_id	= 0x681d,[m
+[31m-		.num_functions	= ARRAY_SIZE(usb_functions_default),[m
+[31m-		.functions	= usb_functions_default,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static struct usb_mass_storage_platform_data mass_storage_pdata = {[m
+[31m-	.nluns		= 1,[m
+[31m-	.vendor		= "SAMSUNG ",[m
+[31m-	.product        = "GT-S5670 Card",[m
+[31m-	.release	= 0x0100,[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device usb_mass_storage_device = {[m
+[31m-	.name           = "usb_mass_storage",[m
+[31m-	.id             = -1,[m
+[31m-	.dev            = {[m
+[31m-		.platform_data          = &mass_storage_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static struct usb_ether_platform_data rndis_pdata = {[m
+[31m-	/* ethaddr is filled by board_serialno_setup */[m
+[31m-	.vendorID	= 0x04e8,[m
+[31m-	.vendorDescr	= "Qualcomm Incorporated",[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device rndis_device = {[m
+[31m-	.name	= "rndis",[m
+[31m-	.id	= -1,[m
+[31m-	.dev	= {[m
+[31m-		.platform_data = &rndis_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static struct android_usb_platform_data android_usb_pdata = {[m
+[31m-	.vendor_id	= 0x04e8,[m
+[31m-	.product_id	= 0x681d,[m
+[31m-	.version	= 0x0100,[m
+[31m-	.product_name	= "Samsung Android USB Device",[m
+[31m-	.manufacturer_name = "SAMSUNG Electronics Co., Ltd.",[m
+[31m-	.num_products = ARRAY_SIZE(usb_products),[m
+[31m-	.products = usb_products,[m
+[31m-	.num_functions = ARRAY_SIZE(usb_functions_all),[m
+[31m-	.functions = usb_functions_all,[m
+[31m-	.serial_number = "1234567890ABCDEF",[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device android_usb_device = {[m
+[31m-	.name	= "android_usb",[m
+[31m-	.id		= -1,[m
+[31m-	.dev		= {[m
+[31m-		.platform_data = &android_usb_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static int __init board_serialno_setup(char *serialno)[m
+[31m-{[m
+[31m-	int i;[m
+[31m-	char *src = serialno;[m
+[31m-[m
+[31m-	/* create a fake MAC address from our serial number.[m
+[31m-	 * first byte is 0x02 to signify locally administered.[m
+[31m-	 */[m
+[31m-	rndis_pdata.ethaddr[0] = 0x02;[m
+[31m-	for (i = 0; *src; i++) {[m
+[31m-		/* XOR the USB serial across the remaining bytes */[m
+[31m-		rndis_pdata.ethaddr[i % (ETH_ALEN - 1) + 1] ^= *src++;[m
+[31m-	}[m
+[31m-[m
+[31m-	android_usb_pdata.serial_number = serialno;[m
+[31m-	return 1;[m
+[31m-}[m
+[31m-__setup("androidboot.serialno=", board_serialno_setup);[m
+[31m-#endif[m
+[31m-[m
+[31m-static struct platform_device smc91x_device = {[m
+[31m-	.name		= "smc91x",[m
+[31m-	.id		= 0,[m
+[31m-	.num_resources	= ARRAY_SIZE(smc91x_resources),[m
+[31m-	.resource	= smc91x_resources,[m
+[31m-};[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_FUNCTION[m
+[31m-static struct usb_function_map usb_functions_map[] = {[m
+[31m-	{"diag", 0},[m
+[31m-	{"adb", 1},[m
+[31m-	{"modem", 2},[m
+[31m-	{"nmea", 3},[m
+[31m-	{"mass_storage", 4},[m
+[31m-	{"ethernet", 5},[m
+[31m-	{"rmnet", 6},[m
+[31m-};[m
+[31m-[m
+[31m-/* dynamic composition */[m
+[31m-static struct usb_composition usb_func_composition[] = {[m
+[31m-	{[m
+[31m-		.product_id         = 0x9012,[m
+[31m-		.functions	    = 0x5, /* 0101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9013,[m
+[31m-		.functions	    = 0x15, /* 10101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9014,[m
+[31m-		.functions	    = 0x30, /* 110000 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9016,[m
+[31m-		.functions	    = 0xD, /* 01101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9017,[m
+[31m-		.functions	    = 0x1D, /* 11101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0xF000,[m
+[31m-		.functions	    = 0x10, /* 10000 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0xF009,[m
+[31m-		.functions	    = 0x20, /* 100000 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9018,[m
+[31m-		.functions	    = 0x1F, /* 011111 */[m
+[31m-	},[m
+[31m-#ifdef CONFIG_USB_FUNCTION_RMNET[m
+[31m-	{[m
+[31m-		.product_id         = 0x9021,[m
+[31m-		/* DIAG + RMNET */[m
+[31m-		.functions	    = 0x41,[m
+[31m-	},[m
+[31m-	{[m
+[31m-		.product_id         = 0x9022,[m
+[31m-		/* DIAG + ADB + RMNET */[m
+[31m-		.functions	    = 0x43,[m
+[31m-	},[m
+[31m-#endif[m
+[31m-[m
+[31m-};[m
+[31m-[m
+[31m-static struct msm_hsusb_platform_data msm_hsusb_pdata = {[m
+[31m-	.version	= 0x0100,[m
+[31m-	.phy_info	= (USB_PHY_INTEGRATED | USB_PHY_MODEL_65NM),[m
+[31m-	.vendor_id          = 0x5c6,[m
+[31m-	.product_name       = "Qualcomm HSUSB Device",[m
+[31m-	.serial_number      = "1234567890ABCDEF",[m
+[31m-	.manufacturer_name  = "Qualcomm Incorporated",[m
+[31m-	.compositions	= usb_func_composition,[m
+[31m-	.num_compositions = ARRAY_SIZE(usb_func_composition),[m
+[31m-	.function_map   = usb_functions_map,[m
+[31m-	.num_functions	= ARRAY_SIZE(usb_functions_map),[m
+[31m-	.config_gpio    = NULL,[m
+[31m-};[m
+[31m-#endif[m
+[31m-[m
+ #ifdef CONFIG_USB_EHCI_MSM[m
+ static void msm_hsusb_vbus_power(unsigned phy_info, int on)[m
+ {[m
+[36m@@ -2064,21 +1835,9 @@[m [mstatic struct platform_device *devices[] __initdata = {[m
+ 	&msm_device_gadget_peripheral,[m
+ #endif[m
+ #endif[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_FUNCTION[m
+[31m-	&msm_device_hsusb_peripheral,[m
+[31m-	&mass_storage_device,[m
+[31m-#endif[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_ANDROID[m
+[31m-	&usb_mass_storage_device,[m
+[31m-	&rndis_device,[m
+[31m-#ifdef CONFIG_USB_ANDROID_DIAG[m
+[31m-	&usb_diag_device,[m
+[31m-#endif[m
+[31m-	&android_usb_device,[m
+[32m+[m[32m#ifdef CONFIG_USB_G_ANDROID[m
+[32m+[m[32m        &android_usb_device,[m
+ #endif[m
+[31m-[m
+ 	&msm_wlan_pm_device,[m
+ [m
+ 	&msm_device_i2c,[m
+[1mdiff --git a/arch/arm/mach-msm/board-gio.c b/arch/arm/mach-msm/board-gio.c[m
+[1mindex 6923494..c725229 100644[m
+[1m--- a/arch/arm/mach-msm/board-gio.c[m
+[1m+++ b/arch/arm/mach-msm/board-gio.c[m
+[36m@@ -1877,21 +1877,9 @@[m [mstatic struct platform_device *devices[] __initdata = {[m
+ 	&msm_device_gadget_peripheral,[m
+ #endif[m
+ #endif[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_FUNCTION[m
+[31m-	&msm_device_hsusb_peripheral,[m
+[31m-	&mass_storage_device,[m
+[31m-#endif[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_ANDROID[m
+[31m-	&usb_mass_storage_device,[m
+[31m-	&rndis_device,[m
+[31m-#ifdef CONFIG_USB_ANDROID_DIAG[m
+[31m-	&usb_diag_device,[m
+[31m-#endif[m
+[31m-	&android_usb_device,[m
+[32m+[m[32m#ifdef CONFIG_USB_G_ANDROID[m
+[32m+[m[32m        &android_usb_device,[m
+ #endif[m
+[31m-[m
+ 	&msm_wlan_pm_device,[m
+ [m
+ 	&msm_device_i2c,[m
+[1mdiff --git a/arch/arm/mach-msm/board-tass.c b/arch/arm/mach-msm/board-tass.c[m
+[1mindex 9eae2d3..1bc8138 100755[m
+[1m--- a/arch/arm/mach-msm/board-tass.c[m
+[1m+++ b/arch/arm/mach-msm/board-tass.c[m
+[36m@@ -23,6 +23,7 @@[m
+ #include <linux/delay.h>[m
+ #include <linux/bootmem.h>[m
+ //#include <linux/usb/mass_storage_function.h>[m
+[32m+[m[32m#include <linux/slab.h>[m
+ #include <linux/power_supply.h>[m
+ #include <linux/gpio_event.h>[m
+ #include <linux/i2c-gpio.h>[m
+[36m@@ -62,6 +63,11 @@[m
+ #include <linux/android_pmem.h>[m
+ #include <mach/camera.h>[m
+ [m
+[32m+[m[32m#ifdef CONFIG_USB_G_ANDROID[m
+[32m+[m[32m#include <linux/usb/android.h>[m
+[32m+[m[32m#include <mach/usbdiag.h>[m
+[32m+[m[32m#endif[m
+[32m+[m
+ #include "devices.h"[m
+ #include "clock.h"[m
+ #include "msm-keypad-devices.h"[m
+[36m@@ -74,10 +80,6 @@[m
+ #include <linux/msm_kgsl.h>[m
+ #endif[m
+ [m
+[31m-#ifdef CONFIG_USB_ANDROID[m
+[31m-#include <linux/usb/android_composite.h>[m
+[31m-#endif[m
+[31m-[m
+ #ifdef CONFIG_SENSORS_BMA_ACCEL[m
+ #include <linux/i2c/bma023_dev.h>[m
+ #endif[m
+[36m@@ -276,241 +278,27 @@[m [mstatic struct resource smc91x_resources[] = {[m
+ 	},[m
+ };[m
+ [m
+[31m-#ifdef CONFIG_USB_FUNCTION[m
+[31m-static struct usb_mass_storage_platform_data usb_mass_storage_pdata = {[m
+[31m-	.nluns          = 0x02,[m
+[31m-	.buf_size       = 16384,[m
+[31m-	.vendor         = "GOOGLE",[m
+[31m-	.product        = "Mass storage",[m
+[31m-	.release        = 0xffff,[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device mass_storage_device = {[m
+[31m-	.name           = "usb_mass_storage",[m
+[31m-	.id             = -1,[m
+[31m-	.dev            = {[m
+[31m-		.platform_data          = &usb_mass_storage_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID[m
+[31m-static char *usb_functions_default[] = {[m
+[31m-	"usb_mass_storage",[m
+[31m-};[m
+[31m-[m
+[31m-static char *usb_functions_default_adb[] = {[m
+[31m-	"adb",[m
+[31m-	"acm",[m
+[31m-	"diag",[m
+[31m-	"usb_mass_storage",[m
+[31m-};[m
+[31m-[m
+[31m-static char *usb_functions_rndis[] = {[m
+[31m-	"rndis",[m
+[31m-};[m
+[31m-[m
+[31m-static char *usb_functions_all[] = {[m
+[31m-#ifdef CONFIG_USB_ANDROID_ACM[m
+[31m-	"acm",[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID_DIAG[m
+[31m-	"diag",[m
+[31m-#endif[m
+[31m-	"usb_mass_storage",[m
+[31m-	"adb",[m
+[31m-#ifdef CONFIG_USB_F_SERIAL[m
+[31m-	"modem",[m
+[31m-	"nmea",[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID_RMNET[m
+[31m-	"rmnet",[m
+[31m-#endif[m
+[31m-#ifdef CONFIG_USB_ANDROID_RNDIS[m
+[31m-	"rndis",[m
+[31m-#endif[m
+[31m-};[m
+[31m-[m
+[31m-static struct android_usb_product usb_products[] = {[m
+[31m-	{[m
+[31m-		.product_id         = 0x6881,[m
+[31m-		.num_functions	= ARRAY_SIZE(usb_functions_rndis),[m
+[31m-		.functions	= usb_functions_rndis,[m
+[31m-	},[m
+[31m-	{[m
+[31m-		.product_id	= 0x689e,[m
+[31m-		.num_functions	= ARRAY_SIZE(usb_functions_default_adb),[m
+[31m-		.functions	= usb_functions_default_adb,[m
+[31m-	},[m
+[31m-	{[m
+[31m-		.product_id	= 0x681d,[m
+[31m-		.num_functions	= ARRAY_SIZE(usb_functions_default),[m
+[31m-		.functions	= usb_functions_default,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static struct usb_mass_storage_platform_data mass_storage_pdata = {[m
+[31m-	.nluns		= 1,[m
+[31m-	.vendor		= "SAMSUNG ",[m
+[31m-#ifdef CONFIG_SAMSUNG_TASS_ISL_B //netq change for model name for TassB israel PCL [m
+[31m-	.product	= "GT-S5570B Card",[m
+[31m-#else [m
+[31m-	.product        = "GT-S5570 Card",[m
+[31m-#endif	[m
+[31m-	.release	= 0x0100,[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device usb_mass_storage_device = {[m
+[31m-	.name           = "usb_mass_storage",[m
+[31m-	.id             = -1,[m
+[31m-	.dev            = {[m
+[31m-		.platform_data          = &mass_storage_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static struct usb_ether_platform_data rndis_pdata = {[m
+[31m-	/* ethaddr is filled by board_serialno_setup */[m
+[31m-	.vendorID	= 0x04e8,[m
+[31m-	.vendorDescr	= "Qualcomm Incorporated",[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device rndis_device = {[m
+[31m-	.name	= "rndis",[m
+[31m-	.id	= -1,[m
+[31m-	.dev	= {[m
+[31m-		.platform_data = &rndis_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static struct android_usb_platform_data android_usb_pdata = {[m
+[31m-	.vendor_id	= 0x04e8,[m
+[31m-	.product_id	= 0x681d,[m
+[31m-	.version	= 0x0100,[m
+[31m-	.product_name	= "Samsung Android USB Device",[m
+[31m-	.manufacturer_name = "SAMSUNG Electronics Co., Ltd.",[m
+[31m-	.num_products = ARRAY_SIZE(usb_products),[m
+[31m-	.products = usb_products,[m
+[31m-	.num_functions = ARRAY_SIZE(usb_functions_all),[m
+[31m-	.functions = usb_functions_all,[m
+[31m-	.serial_number = "1234567890ABCDEF",[m
+[31m-};[m
+[31m-[m
+[31m-static struct platform_device android_usb_device = {[m
+[31m-	.name	= "android_usb",[m
+[31m-	.id		= -1,[m
+[31m-	.dev		= {[m
+[31m-		.platform_data = &android_usb_pdata,[m
+[31m-	},[m
+[31m-};[m
+[31m-[m
+[31m-static int __init board_serialno_setup(char *serialno)[m
+[31m-{[m
+[31m-	int i;[m
+[31m-	char *src = serialno;[m
+[31m-[m
+[31m-	/* create a fake MAC address from our serial number.[m
+[31m-	 * first byte is 0x02 to signify locally administered.[m
+[31m-	 */[m
+[31m-	rndis_pdata.ethaddr[0] = 0x02;[m
+[31m-	for (i = 0; *src; i++) {[m
+[31m-		/* XOR the USB serial across the remaining bytes */[m
+[31m-		rndis_pdata.ethaddr[i % (ETH_ALEN - 1) + 1] ^= *src++;[m
+[31m-	}[m
+[31m-[m
+[31m-	android_usb_pdata.serial_number = serialno;[m
+[31m-	return 1;[m
+[31m-}[m
+[31m-__setup("androidboot.serialno=", board_serialno_setup);[m
+[31m-#endif[m
+[31m-[m
+ static struct platform_device smc91x_device = {[m
+ 	.name		= "smc91x",[m
+ 	.id		= 0,[m
+ 	.num_resources	= ARRAY_SIZE(smc91x_resources),[m
+ 	.resource	= smc91x_resources,[m
+ };[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_FUNCTION[m
+[31m-static struct usb_function_map usb_functions_map[] = {[m
+[31m-	{"diag", 0},[m
+[31m-	{"adb", 1},[m
+[31m-	{"modem", 2},[m
+[31m-	{"nmea", 3},[m
+[31m-	{"mass_storage", 4},[m
+[31m-	{"ethernet", 5},[m
+[31m-	{"rmnet", 6},[m
+[31m-};[m
+[31m-[m
+[31m-/* dynamic composition */[m
+[31m-static struct usb_composition usb_func_composition[] = {[m
+[31m-	{[m
+[31m-		.product_id         = 0x9012,[m
+[31m-		.functions	    = 0x5, /* 0101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9013,[m
+[31m-		.functions	    = 0x15, /* 10101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9014,[m
+[31m-		.functions	    = 0x30, /* 110000 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9016,[m
+[31m-		.functions	    = 0xD, /* 01101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9017,[m
+[31m-		.functions	    = 0x1D, /* 11101 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0xF000,[m
+[31m-		.functions	    = 0x10, /* 10000 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0xF009,[m
+[31m-		.functions	    = 0x20, /* 100000 */[m
+[31m-	},[m
+[31m-[m
+[31m-	{[m
+[31m-		.product_id         = 0x9018,[m
+[31m-		.functions	    = 0x1F, /* 011111 */[m
+[31m-	},[m
+[31m-#ifdef CONFIG_USB_FUNCTION_RMNET[m
+[31m-	{[m
+[31m-		.product_id         = 0x9021,[m
+[31m-		/* DIAG + RMNET */[m
+[31m-		.functions	    = 0x41,[m
+[31m-	},[m
+[31m-	{[m
+[31m-		.product_id         = 0x9022,[m
+[31m-		/* DIAG + ADB + RMNET */[m
+[31m-		.functions	    = 0x43,[m
+[31m-	},[m
+[31m-#endif[m
+[31m-[m
+[32m+[m[32m#ifdef CONFIG_USB_G_ANDROID[m
+[32m+[m[32mstatic struct android_usb_platform_data android_usb_pdata = {[m
+[32m+[m[32m        .update_pid_and_serial_num = usb_diag_update_pid_and_serial_num,[m
+ };[m
+ [m
+[31m-static struct msm_hsusb_platform_data msm_hsusb_pdata = {[m
+[31m-	.version	= 0x0100,[m
+[31m-	.phy_info	= (USB_PHY_INTEGRATED | USB_PHY_MODEL_65NM),[m
+[31m-	.vendor_id          = 0x5c6,[m
+[31m-	.product_name       = "Qualcomm HSUSB Device",[m
+[31m-	.serial_number      = "1234567890ABCDEF",[m
+[31m-	.manufacturer_name  = "Qualcomm Incorporated",[m
+[31m-	.compositions	= usb_func_composition,[m
+[31m-	.num_compositions = ARRAY_SIZE(usb_func_composition),[m
+[31m-	.function_map   = usb_functions_map,[m
+[31m-	.num_functions	= ARRAY_SIZE(usb_functions_map),[m
+[31m-	.config_gpio    = NULL,[m
+[32m+[m[32mstatic struct platform_device android_usb_device = {[m
+[32m+[m[32m        .name       = "android_usb",[m
+[32m+[m[32m        .id         = -1,[m
+[32m+[m[32m        .dev        = {[m
+[32m+[m[32m                .platform_data = &android_usb_pdata,[m
+[32m+[m[32m        },[m
+ };[m
+ #endif[m
+ [m
+[32m+[m
+ #ifdef CONFIG_USB_EHCI_MSM[m
+ static void msm_hsusb_vbus_power(unsigned phy_info, int on)[m
+ {[m
+[36m@@ -2014,21 +1802,9 @@[m [mstatic struct platform_device *devices[] __initdata = {[m
+ 	&msm_device_gadget_peripheral,[m
+ #endif[m
+ #endif[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_FUNCTION[m
+[31m-	&msm_device_hsusb_peripheral,[m
+[31m-	&mass_storage_device,[m
+[31m-#endif[m
+[31m-[m
+[31m-#ifdef CONFIG_USB_ANDROID[m
+[31m-	&usb_mass_storage_device,[m
+[31m-	&rndis_device,[m
+[31m-#ifdef CONFIG_USB_ANDROID_DIAG[m
+[31m-	&usb_diag_device,[m
+[31m-#endif[m
+[31m-	&android_usb_device,[m
+[32m+[m[32m#ifdef CONFIG_USB_G_ANDROID[m
+[32m+[m[32m        &android_usb_device,[m
+ #endif[m
+[31m-[m
+ 	&msm_wlan_pm_device,[m
+ [m
+ 	&msm_device_i2c,[m

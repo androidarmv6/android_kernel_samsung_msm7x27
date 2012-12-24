@@ -268,8 +268,21 @@ int msm_fb_check_frame_rate(struct msm_fb_data_type *mfd,
 				struct fb_info *info);
 
 #ifdef CONFIG_FB_MSM_LOGO
-#define INIT_IMAGE_FILE "/initlogo.rle"
+
+#if defined(CONFIG_MACH_COOPER)
+#define INIT_IMAGE_FILE "/COOPER.rle"
+#elif defined(CONFIG_MACH_GIO)
+#define INIT_IMAGE_FILE "/GIO.rle"
+#elif defined(CONFIG_MACH_BENI)
+#define INIT_IMAGE_FILE "/BENI.rle"
+#elif defined(CONFIG_MACH_TASS)
+#define INIT_IMAGE_FILE "/TASS.rle"
+#endif
+
+#define CHARGING_IMAGE_FILE "/charging.rle"
+
 int load_565rle_image(char *filename, bool bf_supported);
+extern int charging_boot;
 #endif
 
 #endif /* MSM_FB_H */

@@ -77,19 +77,6 @@ static int msm_lcd_read_proc(char *page, char **start, off_t off, int count, int
 static int msm_lcd_write_proc(struct file *file, const char __user *buffer,unsigned long count, void *data);
 //ZTE_LCD_LHT_20100622_001 end
 
-
-#ifdef CONFIG_ZTE_PLATFORM
-#ifdef CONFIG_ZTE_FTM_FLAG_SUPPORT
-extern int zte_get_ftm_flag(void);
-#endif
-#endif
-#ifndef CONFIG_FB_MSM_LOGO
-#define INIT_IMAGE_FILE "/logo.bmp"								////ZTE_LCD_LUYA_20091221_001
-extern int load_565rle_image(char *filename);
-#endif
-#ifdef CONFIG_FB_MSM_SEC_BOOTLOGO
-extern int load_565rle_image_onfb( char *filename, int start_x, int start_y);
-#endif
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_NUM	3
 #endif
@@ -1398,38 +1385,13 @@ static int msm_fb_register(struct msm_fb_data_type *mfd)
 	    ("FrameBuffer[%d] %dx%d size=%d bytes is registered successfully!\n",
 	     mfd->index, fbi->var.xres, fbi->var.yres, fbi->fix.smem_len);
 
-#ifdef CONFIG_FB_MSM_SEC_BOOTLOGO
-	// if (!load_565rle_image_onfb( "EUROPA.rle",0,99)) ;	/* Flip buffer */
-// 20100909 hongkuk.son for COOPER.rle ( booting logo )
-	// if (!load_565rle_image_onfb( "CALLISTO.rle",0,0)) ;	/* Flip buffer */
-
-#if defined(CONFIG_MACH_COOPER_CHN_CU)
-	if (!load_565rle_image_onfb( "COOPERCU.rle",0,0)) ;	/* Flip buffer */
-#elif  defined(CONFIG_MACH_COOPER) && !defined(CONFIG_MACH_COOPER_CHN_CU)	
-    if (!load_565rle_image_onfb( "COOPER.rle",0,0)) ;	/* Flip buffer */
-#endif	
-
-#if defined(CONFIG_MACH_GIO)
-	if (!load_565rle_image_onfb( "GIO.rle",0,0)) ;	/* Flip buffer */
-#endif
-
-#if defined(CONFIG_MACH_BENI)
-	if (!load_565rle_image_onfb( "BENI.rle",0,0)) ;	/* Flip buffer */
-#endif	
-
-#if defined(CONFIG_MACH_TASS_CHN_CU)
-	if (!load_565rle_image_onfb( "TASSCU.rle",0,0)) ;	/* Flip buffer */
-#elif 	 defined(CONFIG_MACH_TASS) && !defined(CONFIG_MACH_TASS_CHN_CU)	
-    if (!load_565rle_image_onfb( "TASS.rle",0,0)) ;	/* Flip buffer */
-#endif	
-
-#if defined(CONFIG_MACH_LUCAS)
-	if (!load_565rle_image_onfb( "LUCAS.rle",0,0)) ;	/* Flip buffer */
-#endif	
-
-#if defined(CONFIG_MACH_CALLISTO)
-	if (!load_565rle_image_onfb( "CALLISTO.rle",0,0)) ;	/* Flip buffer */
-#endif	
+#ifdef CONFIG_FB_MSM_LOGO
+	if (charging_boot) {
+		if (!load_565rle_image(CHARGING_IMAGE_FILE, bf_supported)) ;
+	}
+	else {
+		if (!load_565rle_image(INIT_IMAGE_FILE, bf_supported)) ;
+	}
 #endif
 
 	ret = 0;
