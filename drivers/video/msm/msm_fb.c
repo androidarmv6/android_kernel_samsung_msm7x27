@@ -910,6 +910,9 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 			int curr_pwr_state;
 
 			mfd->op_enable = FALSE;
+			curr_pwr_state = mfd->panel_power_on;	  	
+			mfd->panel_power_on = FALSE;
+			bl_updated = 0;
 			msleep(16);
 #if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS)
 			msm_fb_set_backlight(mfd, 0, 0);
@@ -930,6 +933,10 @@ static int msm_fb_blank_sub(int blank_mode, struct fb_info *info,
 #endif
 
 			mfd->op_enable = TRUE;
+
+			} else {
+			if (pdata->power_ctrl)
+			pdata->power_ctrl(FALSE);
 		}
 		break;
 	}
