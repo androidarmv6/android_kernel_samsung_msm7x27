@@ -2627,14 +2627,6 @@ static void __init msm7x2x_init(void)
 	msm_acpu_clock_init(&msm7x2x_clock_data);
 	usb_mpp_init();
 
-#ifdef CONFIG_USB_FUNCTION
-	msm_hsusb_pdata.swfi_latency =
-		msm7x27_pm_data
-		[MSM_PM_SLEEP_MODE_RAMP_DOWN_AND_WAIT_FOR_INTERRUPT].latency;
-
-	msm_device_hsusb_peripheral.dev.platform_data = &msm_hsusb_pdata;
-#endif
-
 #ifdef CONFIG_USB_MSM_OTG_72K
 	msm_device_otg.dev.platform_data = &msm_otg_pdata;
 	if (machine_is_msm7x25_surf() || machine_is_msm7x25_ffa()) {
