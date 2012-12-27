@@ -66,23 +66,6 @@ when         who           what, where, why                          comment tag
 #include "mdp.h"
 #include "mdp4.h"
 
-//ZTE_LCD_LHT_20100622_001 start
-#include <linux/proc_fs.h>
-static struct proc_dir_entry * d_entry;
-static int lcd_debug;
-char  module_name[50]={"0"};
-void init_lcd_proc(void);
-void deinit_lcd_proc(void);
-static int msm_lcd_read_proc(char *page, char **start, off_t off, int count, int *eof, void *data);
-static int msm_lcd_write_proc(struct file *file, const char __user *buffer,unsigned long count, void *data);
-//ZTE_LCD_LHT_20100622_001 end
-
-
-#ifdef CONFIG_ZTE_PLATFORM
-#ifdef CONFIG_ZTE_FTM_FLAG_SUPPORT
-extern int zte_get_ftm_flag(void);
-#endif
-#endif
 #ifndef CONFIG_FB_MSM_LOGO
 #define INIT_IMAGE_FILE "/logo.bmp"								////ZTE_LCD_LUYA_20091221_001
 extern int load_565rle_image(char *filename);
@@ -360,6 +343,55 @@ static void msm_fb_remove_sysfs(struct platform_device *pdev)
 	sysfs_remove_group(&mfd->fbi->dev->kobj, &msm_fb_attr_group);
 }
 
+/* Mark for GetLog */
+
+struct struct_frame_buf_mark {
+	u32 special_mark_1;
+	u32 special_mark_2;
+	u32 special_mark_3;
+	u32 special_mark_4;
+	void *p_fb;
+	u32 resX;
+	u32 resY;
+	u32 bpp;    //color depth : 16 or 24
+	u32 frames; // frame buffer count : 2
+};
+
+static struct struct_frame_buf_mark  frame_buf_mark = {
+	.special_mark_1 = (('*' << 24) | ('^' << 16) | ('^' << 8) | ('*' << 0)),
+	.special_mark_2 = (('I' << 24) | ('n' << 16) | ('f' << 8) | ('o' << 0)),
+	.special_mark_3 = (('H' << 24) | ('e' << 16) | ('r' << 8) | ('e' << 0)),
+	.special_mark_4 = (('f' << 24) | ('b' << 16) | ('u' << 8) | ('f' << 0)),
+	.p_fb   = 0,
+	
+#if defined(CONFIG_MACH_EUROPA)
+	.resX   = 256,
+	.resY   = 320,
+	.bpp    = 24,
+#endif	
+#if defined(CONFIG_MACH_CALLISTO)
+	.resX   = 256,
+	.resY   = 400,
+	.bpp    = 24,
+#endif	
+#if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO)
+	.resX   = 320,
+	.resY   = 480,
+	.bpp    = 24,
+#endif	
+#if defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS)
+	.resX   = 256,
+	.resY   = 320,
+	.bpp    = 18,
+#endif	
+#if defined(CONFIG_MACH_LUCAS)
+	.resX   = 320,
+	.resY   = 240,
+	.bpp    = 24,
+#endif	
+
+	.frames = 2
+};
 static int msm_fb_probe(struct platform_device *pdev)
 {
 	struct msm_fb_data_type *mfd;
@@ -396,6 +428,9 @@ static int msm_fb_probe(struct platform_device *pdev)
 	if (!msm_fb_resource_initialized)
 		return -EPERM;
 
+	/* Mark for GetLog */
+	frame_buf_mark.p_fb = fbram_phys - 0x13600000;
+
 	mfd = (struct msm_fb_data_type *)platform_get_drvdata(pdev);
 
 	err = pm_runtime_set_active(&pdev->dev);
@@ -412,25 +447,6 @@ static int msm_fb_probe(struct platform_device *pdev)
 		return -ENOMEM;
 
 	mfd->panel_info.frame_count = 0;
-	///ZTE_LCD_LUYA_20100325_001,LCD_LUYA_20100610_01 2009-11-28 decrease initial brightness of backlight 
-	mfd->bl_level = mfd->panel_info.bl_max/6;
-	//ZTE_LCD_LHT_20100617_001
-#ifdef CONFIG_ZTE_PLATFORM
-#ifdef CONFIG_ZTE_FTM_FLAG_SUPPORT
-    if(zte_get_ftm_flag())
-    {
-        mfd->bl_level = 2;
-    }
-#endif
-#endif
-	//ZTE_BACKLIGHT_HP_002 end 
-#ifdef CONFIG_FB_MSM_OVERLAY
-	mfd->overlay_play_enable = 1;
-#endif
-
-       //ZTE_LCD_LHT_20100622_001 start
-       init_lcd_proc();
-       //ZTE_LCD_LHT_20100622_001 end
        
 	bf_supported = mdp4_overlay_borderfill_supported();
 
