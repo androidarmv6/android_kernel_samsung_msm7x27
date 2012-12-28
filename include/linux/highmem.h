@@ -77,6 +77,7 @@ static inline void kunmap_atomic_notypecheck(void *addr, enum km_type idx)
 	pagefault_enable();
 }
 
+
 #define kmap_atomic_pfn(pfn, idx)	kmap_atomic(pfn_to_page(pfn), (idx))
 #define kmap_atomic_to_page(ptr)	virt_to_page(ptr)
 
@@ -84,6 +85,13 @@ static inline void kunmap_atomic_notypecheck(void *addr, enum km_type idx)
 #endif
 
 #endif /* CONFIG_HIGHMEM */
+
+/* Prevent people trying to call kunmap_atomic() as if it were kunmap() */
+/* kunmap_atomic() should get the return value of kmap_atomic, not the page. */
+#define kunmap_atomic(addr, idx) do { \
+		BUILD_BUG_ON(__same_type((addr), struct page *)); \
+		kunmap_atomic_notypecheck((addr), (idx)); \
+	} while (0)
 
 /* when CONFIG_HIGHMEM is not set these will be plain clear/copy_page */
 #ifndef clear_user_highpage

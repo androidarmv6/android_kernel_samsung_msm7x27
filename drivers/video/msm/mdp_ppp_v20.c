@@ -2180,8 +2180,26 @@ void mdp_set_scale(MDPIBUF *iBuf,
 			*pppop_reg_ptr |=
 			    (PPP_OP_SCALE_Y_ON | PPP_OP_SCALE_X_ON);
 
-			/* let's use SHIM logic to calculate the
-			   partial ROI scaling */
+		/* let's use SHIM logic to calculate the partial ROI scaling */
+#if 0
+			phasex_step =
+			    (uint32) mdp_do_div(0x20000000 * iBuf->roi.width,
+						dst_roi_width_scale);
+			phasey_step =
+			    (uint32) mdp_do_div(0x20000000 * iBuf->roi.height,
+						dst_roi_height_scale);
+
+/*
+    phasex_step= ((long long) iBuf->roi.width * 0x20000000)/dst_roi_width_scale;
+    phasey_step= ((long long)iBuf->roi.height * 0x20000000)/dst_roi_height_scale;
+*/
+
+			phasex_init =
+			    (((long long)phasex_step - 0x20000000) >> 1);
+			phasey_init =
+			    (((long long)phasey_step - 0x20000000) >> 1);
+
+#else
 			mdp_calc_scale_params(iBuf->roi.x, iBuf->roi.width,
 					      dst_roi_width_scale, 1,
 					      &phasex_init, &phasex_step,
@@ -2190,6 +2208,7 @@ void mdp_set_scale(MDPIBUF *iBuf,
 					      dst_roi_height_scale, 0,
 					      &phasey_init, &phasey_step,
 					      &dummy, &dummy);
+#endif
 			MDP_OUTP(MDP_CMD_DEBUG_ACCESS_BASE + 0x013c,
 				 phasex_init);
 			MDP_OUTP(MDP_CMD_DEBUG_ACCESS_BASE + 0x0140,
@@ -2406,10 +2425,7 @@ void mdp_adjust_start_addr(uint8 **src0,
 			   uint32 width,
 			   uint32 height, int bpp, MDPIBUF *iBuf, int layer)
 {
-	if (iBuf->mdpImg.imgType == MDP_Y_CBCR_H2V2_ADRENO && layer == 0)
-		*src0 += (x + y * ALIGN(width, 32)) * bpp;
-	else
-		*src0 += (x + y * width) * bpp;
+	*src0 += (x + y * width) * bpp;
 
 	/* if it's dest/bg buffer, we need to adjust it for rotation */
 	if (layer != 0)
@@ -2420,14 +2436,9 @@ void mdp_adjust_start_addr(uint8 **src0,
 		 * MDP_Y_CBCR_H2V2/MDP_Y_CRCB_H2V2 cosite for now
 		 * we need to shift x direction same as y dir for offsite
 		 */
-		if (iBuf->mdpImg.imgType == MDP_Y_CBCR_H2V2_ADRENO
-							&& layer == 0)
-			*src1 += ((x / h_slice) * h_slice + ((y == 0) ? 0 :
-			(((y + 1) / v_slice - 1) * (ALIGN(width/2, 32) * 2))))
-									* bpp;
-		else
-			*src1 += ((x / h_slice) * h_slice +
-			((y == 0) ? 0 : ((y + 1) / v_slice - 1) * width)) * bpp;
+		*src1 +=
+		    ((x / h_slice) * h_slice +
+		     ((y == 0) ? 0 : ((y + 1) / v_slice - 1) * width)) * bpp;
 
 		/* if it's dest/bg buffer, we need to adjust it for rotation */
 		if (layer != 0)
