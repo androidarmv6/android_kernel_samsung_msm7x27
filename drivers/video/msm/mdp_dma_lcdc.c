@@ -105,7 +105,17 @@ int mdp_lcdc_on(struct platform_device *pdev)
 	uint32 timer_base = LCDC_BASE;
 	uint32 block = MDP_DMA2_BLOCK;
 	int ret;
-	uint32_t mask, curr;
+
+	// hsil
+	if (mdp_lcdc_on_flg)
+	{
+		printk("[kkw] %s(%d)  mdp_lcdc_on start called twice\n", __func__, __LINE__);
+		return 0;
+	}
+
+	mdp_lcdc_on_flg = 1;
+
+	printk("[HSIL] %s(%d)  mdp_lcdc_on start\n", __func__, __LINE__);
 
 	mfd = (struct msm_fb_data_type *)platform_get_drvdata(pdev);
 
@@ -123,8 +133,7 @@ int mdp_lcdc_on(struct platform_device *pdev)
 
 	bpp = fbi->var.bits_per_pixel / 8;
 	buf = (uint8 *) fbi->fix.smem_start;
-
-	buf += calc_fb_offset(mfd, fbi, bpp);
+	buf += fbi->var.xoffset * bpp + fbi->var.yoffset * fbi->fix.line_length;
 
 #if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_CALLISTO)
 	dma2_cfg_reg = DMA_PACK_ALIGN_LSB | DMA_DITHER_EN | DMA_OUT_SEL_LCDC;
@@ -399,8 +408,8 @@ void mdp_lcdc_update(struct msm_fb_data_type *mfd)
 	/* no need to power on cmd block since it's lcdc mode */
 	bpp = fbi->var.bits_per_pixel / 8;
 	buf = (uint8 *) fbi->fix.smem_start;
-
-	buf += calc_fb_offset(mfd, fbi, bpp);
+	buf += fbi->var.xoffset * bpp +
+		fbi->var.yoffset * fbi->fix.line_length;
 
 	dma_base = DMA_P_BASE;
 
