@@ -1,0 +1,8 @@
+Change-Id: I563d6d925880057accb79aee12aa4cbc64cb48dc
+Code-Review+2: Erik Castricum <erikcas1972@gmail.com>
+Verified+1: Erik Castricum <erikcas1972@gmail.com>
+Submitted-by: Erik Castricum <erikcas1972@gmail.com>
+Submitted-at: Sat, 29 Dec 2012 02:50:39 +0100
+Reviewed-on: http://server.cas-online.nl:8181/210
+Project: androidarmv6/android_kernel_samsung_msm7x27
+Branch: refs/heads/cm-10.1
