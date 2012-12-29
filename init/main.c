@@ -461,6 +461,7 @@ static noinline void __init_refok rest_init(void)
 #if defined (CONFIG_MSM_ARM9_USES_UART3)
 int arm9_uses_uart3=0;
 #endif
+
 unsigned int charging_boot=0;
 #if defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER)  || defined(CONFIG_MACH_GIO)|| defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)
 unsigned int board_hw_revision;

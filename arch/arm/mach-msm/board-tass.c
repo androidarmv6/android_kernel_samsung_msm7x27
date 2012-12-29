@@ -284,6 +284,7 @@ static struct platform_device smc91x_device = {
 	.num_resources	= ARRAY_SIZE(smc91x_resources),
 	.resource	= smc91x_resources,
 };
+
 #ifdef CONFIG_USB_G_ANDROID
 static struct android_usb_platform_data android_usb_pdata = {
         .update_pid_and_serial_num = usb_diag_update_pid_and_serial_num,
@@ -297,7 +298,6 @@ static struct platform_device android_usb_device = {
         },
 };
 #endif
-
 
 #ifdef CONFIG_USB_EHCI_MSM
 static void msm_hsusb_vbus_power(unsigned phy_info, int on)
@@ -1805,6 +1805,7 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_USB_G_ANDROID
         &android_usb_device,
 #endif
+
 	&msm_wlan_pm_device,
 
 	&msm_device_i2c,
@@ -1885,7 +1886,6 @@ static struct platform_device *devices[] __initdata = {
 
 static struct msm_panel_common_pdata mdp_pdata = {
 	.gpio = 97,
-        .mdp_rev = MDP_REV_30,
 };
 
 static void __init msm_fb_add_devices(void)
@@ -2631,14 +2631,6 @@ static void __init msm7x2x_init(void)
 
 	msm_acpu_clock_init(&msm7x2x_clock_data);
 	usb_mpp_init();
-
-#ifdef CONFIG_USB_FUNCTION
-	msm_hsusb_pdata.swfi_latency =
-		msm7x27_pm_data
-		[MSM_PM_SLEEP_MODE_RAMP_DOWN_AND_WAIT_FOR_INTERRUPT].latency;
-
-	msm_device_hsusb_peripheral.dev.platform_data = &msm_hsusb_pdata;
-#endif
 
 #ifdef CONFIG_USB_MSM_OTG_72K
 	msm_device_otg.dev.platform_data = &msm_otg_pdata;

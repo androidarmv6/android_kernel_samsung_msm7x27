@@ -1,4 +1,4 @@
-/* Copyright (c) 2008-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2008-2010, Code Aurora Forum. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -53,7 +53,6 @@ typedef struct panel_id_s {
 #define DTV_PANEL		7	/* DTV */
 #define MIPI_VIDEO_PANEL	8	/* MIPI */
 #define MIPI_CMD_PANEL		9	/* MIPI */
-#define WRITEBACK_PANEL		10	/* Wifi display */
 
 /* panel class */
 typedef enum {
@@ -67,7 +66,6 @@ typedef enum {
 typedef enum {
 	DISPLAY_1 = 0,		/* attached as first device */
 	DISPLAY_2,		/* attached on second device */
-	DISPLAY_3,              /* attached on third writeback device */
 	MAX_PHYS_TARGET_NUM,
 } DISP_TARGET_PHYS;
 
@@ -97,7 +95,15 @@ struct lcdc_panel_info {
 
 struct mddi_panel_info {
 	__u32 vdopkt;
-	boolean is_type1;
+};
+
+/* DSI PHY configuration */
+struct mipi_dsi_phy_ctrl {
+	uint32 regulator[4];
+	uint32 timing[12];
+	uint32 ctrl[4];
+	uint32 strength[4];
+	uint32 pll[21];
 };
 
 struct mipi_panel_info {
@@ -129,7 +135,6 @@ struct mipi_panel_info {
 	char eof_bllp_power_stop;
 	char bllp_power_stop;
 	char traffic_mode;
-        char frame_rate;
 	/* command mode */
 	char interleave_max;
 	char insert_dcs_cmd;
@@ -139,22 +144,13 @@ struct mipi_panel_info {
 	char stream;	/* 0 or 1 */
 	char mdp_trigger;
 	char dma_trigger;
-	uint32 dsi_pclk_rate;
-	/* The packet-size should not bet changed */
-	char no_max_pkt_size;
-	/* Clock required during LP commands */
-	char force_clk_lane_hs;
-	/* Pad width */
-	uint32 xres_pad;
-	/* Pad height */
-	uint32 yres_pad;
 };
 
 struct msm_panel_info {
 	__u32 xres;
 	__u32 yres;
-        __u32 width;    //in mm
-        __u32 height;   //in mm
+	__u32 width;	//in mm
+	__u32 height;	//in mm
 	__u32 bpp;
 	__u32 mode2_xres;
 	__u32 mode2_yres;
@@ -169,13 +165,16 @@ struct msm_panel_info {
 	__u32 clk_min;
 	__u32 clk_max;
 	__u32 frame_count;
-	__u32 is_3d_panel;
-	__u32 frame_rate;
 
 
-	struct mddi_panel_info mddi;
-	struct lcd_panel_info lcd;
-	struct lcdc_panel_info lcdc;
+	union {
+		struct mddi_panel_info mddi;
+	};
+
+	union {
+		struct lcd_panel_info lcd;
+		struct lcdc_panel_info lcdc;
+	};
 
 	struct mipi_panel_info mipi;
 };
@@ -196,7 +195,6 @@ struct msm_fb_panel_data {
 	/* function entry chain */
 	int (*on) (struct platform_device *pdev);
 	int (*off) (struct platform_device *pdev);
-	int (*power_ctrl) (boolean enable);
 	struct platform_device *next;
 	int (*clk_func) (int enable);
 };
