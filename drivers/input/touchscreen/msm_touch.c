@@ -13,7 +13,6 @@
  *
  */
 
-#include <linux/slab.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
 #include <linux/interrupt.h>
@@ -21,6 +20,7 @@
 #include <linux/platform_device.h>
 #include <linux/jiffies.h>
 #include <linux/io.h>
+#include <linux/slab.h>
 
 #include <mach/msm_touch.h>
 
@@ -66,16 +66,48 @@
 
 #define TS_DRIVER_NAME "msm_touchscreen"
 
-#define X_MAX	1024
-#define Y_MAX	1024
+/*static int x_min_cal= 259;
+static int y_min_cal= 234;
+static int x_max_cal= 774;
+static int y_max_cal= 808;
+static int x_max_def= 774-259;
+static int y_max_def= 808-234;*/
+
+static int x_min_cal= 0;
+static int y_min_cal= 0;
+static int x_max_cal= 1024;
+static int y_max_cal= 1024;
+
+module_param_named(x_min, x_min_cal, int, 0644);
+MODULE_PARM_DESC(x_min, "Minimum touchable X value");
+module_param_named(x_max, x_max_cal, int, 0644);
+MODULE_PARM_DESC(x_min, "Maximum touchable X value");
+module_param_named(y_min, y_min_cal, int, 0644);
+MODULE_PARM_DESC(x_min, "Minimum touchable Y value");
+module_param_named(y_max, y_max_cal, int, 0644);
+MODULE_PARM_DESC(y_max, "Maximum touchable Y value");
+
+static int x_max_def= 1024;
+static int y_max_def= 1024;
+
+static int calib_mode= 0;
 #define P_MAX	256
+
+static ssize_t calib_show(struct device *dev, struct device_attribute *attr, char *buf);
+static ssize_t calib_store( struct device *dev, struct device_attribute *attr, const char *buf, size_t size);
+static DEVICE_ATTR(calib, 0644, calib_show, calib_store);
+
+struct class *msm_touch_class;
+EXPORT_SYMBOL(msm_touch_class);
+struct device *msm_touch_dev;
+EXPORT_SYMBOL(msm_touch_dev);
 
 struct ts {
 	struct input_dev *input;
 	struct timer_list timer;
 	int irq;
-	unsigned int x_max;
-	unsigned int y_max;
+	int x_max;
+	int y_max;
 };
 
 static void __iomem *virt;
@@ -138,19 +170,27 @@ static irqreturn_t ts_interrupt(int irq, void *dev_id)
 		/* TSSC can do Z axis measurment, but driver doesn't support
 		 * this yet.
 		 */
-
+		if (calib_mode){
+		 if (x < x_min_cal) x_min_cal = x;
+		 if (x > x_max_cal) x_max_cal = x;
+		 if (y < y_min_cal) y_min_cal = y;
+		 if (y > y_max_cal) y_max_cal = y;
+		}
 		/*
 		 * REMOVE THIS:
 		 * These x, y co-ordinates adjustments will be removed once
 		 * Android framework adds calibration framework.
 		 */
-#ifdef CONFIG_ANDROID_TOUCHSCREEN_MSM_HACKS
-		lx = ts->x_max - x;
-		ly = ts->y_max - y;
-#else
-		lx = x;
-		ly = y;
-#endif
+//#ifdef CONFIG_ANDROID_TOUCHSCREEN_MSM_HACKS
+//		lx = ts->x_max - x;
+//		ly = ts->y_max - y;
+//#else
+//		lx = x;
+//		ly = y;
+//#endif
+		lx = ((x - x_min_cal) * x_max_def) / (x_max_cal - x_min_cal);
+		ly = ts->y_max - (((y - y_min_cal) * y_max_def) / (y_max_cal - y_min_cal));
+		printk("touchscreen debug values: x=%d, lx=%d, y=%d, ly=%d\n", x, lx, y, ly);
 		ts_update_pen_state(ts, lx, ly, 255);
 		/* kick pen up timer - to make sure it expires again(!) */
 		mod_timer(&ts->timer,
@@ -171,7 +211,7 @@ static int __devinit ts_probe(struct platform_device *pdev)
 	struct input_dev *input_dev;
 	struct resource *res, *ioarea;
 	struct ts *ts;
-	unsigned int x_max, y_max, pressure_max;
+	int x_max, y_max, pressure_max;
 	struct msm_ts_platform_data *pdata = pdev->dev.platform_data;
 
 	/* The primary initialization of the TS Hardware
@@ -227,12 +267,12 @@ static int __devinit ts_probe(struct platform_device *pdev)
 	input_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
 
 	if (pdata) {
-		x_max = pdata->x_max ? : X_MAX;
-		y_max = pdata->y_max ? : Y_MAX;
+		x_max = pdata->x_max ? : x_max_def;
+		y_max = pdata->y_max ? : y_max_def;
 		pressure_max = pdata->pressure_max ? : P_MAX;
 	} else {
-		x_max = X_MAX;
-		y_max = Y_MAX;
+		x_max = x_max_def;
+		y_max = y_max_def;
 		pressure_max = P_MAX;
 	}
 
@@ -256,6 +296,11 @@ static int __devinit ts_probe(struct platform_device *pdev)
 		goto fail_req_irq;
 
 	platform_set_drvdata(pdev, ts);
+	
+	msm_touch_class = class_create(THIS_MODULE, "msm_touch");
+	if (IS_ERR(msm_touch_class)) pr_err("Failed to create class(touch)!\n");
+	msm_touch_dev = device_create(msm_touch_class, NULL, 0, NULL, "msm_touch");
+	if (device_create_file(msm_touch_dev, &dev_attr_calib) < 0) pr_err("Failed to create device file(%s)!\n", dev_attr_calib.attr.name);
 
 	return 0;
 
@@ -309,6 +354,31 @@ static void __exit ts_exit(void)
 {
 	platform_driver_unregister(&ts_driver);
 }
+
+static ssize_t calib_show(struct device *dev, struct device_attribute *attr, char *buf)
+{
+	int n;
+	n=sprintf(buf, "%d", calib_mode);
+        return n + 1;
+}
+
+static ssize_t calib_store(
+		struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t size)
+{
+	char *after;
+	unsigned long value = simple_strtoul(buf, &after, 10);
+	if (value) {
+	  calib_mode = 1;
+	  x_min_cal= 512;
+	  y_min_cal= 512;
+	  x_max_cal= 512;
+	  y_max_cal= 512;
+	}
+	else calib_mode = 0;
+	return size;
+}
+
 module_exit(ts_exit);
 
 MODULE_DESCRIPTION("MSM Touch Screen driver");

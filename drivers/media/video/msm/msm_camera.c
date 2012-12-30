@@ -56,6 +56,8 @@ void sensor_rough_control(void __user *arg);
 #include "s5k5ccaf_rough.h"
 #elif defined(CONFIG_MACH_CALLISTO)
 #include "s5k5ca_rough.h"
+#elif defined(CONFIG_MACH_EUROPA)
+#include "sr200pc10_rough.h"
 #endif
 
 #define	pr_info	printk
@@ -2421,7 +2423,7 @@ static long msm_ioctl_control(struct file *filep, unsigned int cmd,
 	case MSM_CAM_IOCTL_GET_CAMERA_INFO:
 		rc = msm_get_camera_info(argp);
 		break;
-#if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_BENI) || defined (CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_CALLISTO)
+#if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_BENI) || defined (CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_EUROPA)
     case MSM_CAM_IOCTL_PCAM_CTRL_8BIT:
         sensor_rough_control(argp);
         rc = 0;

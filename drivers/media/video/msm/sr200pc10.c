@@ -18,6 +18,7 @@
 
 //PGH TEST
 
+#include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/types.h>
 #include <linux/i2c.h>
@@ -74,6 +75,7 @@ static int16_t sr200pc10_effect = CAMERA_EFFECT_OFF;
 	EXTERNAL DECLARATIONS
 ==============================================================*/
 extern struct sr200pc10_reg sr200pc10_regs;
+extern void pcam_msm_i2c_pwr_mgmt(struct i2c_adapter *adap, int on);
 
 
 /*=============================================================*/
@@ -510,9 +512,15 @@ void cam_pw(int status)
 	    vreg_enable(vreg_cam_out9);
 	    vreg_enable(vreg_cam_out10);
 
+	    //after power on, below function will be called.
+	    pcam_msm_i2c_pwr_mgmt(sr200pc10_client->adapter, 1);
+
 	}
 	else
 	{
+	    //after power off, below function will be called.
+	    pcam_msm_i2c_pwr_mgmt(sr200pc10_client->adapter, 0);	
+
 	    PCAM_DEBUG("POWER OFF");
 	    vreg_disable(vreg_cam_out8);
 	    vreg_disable(vreg_cam_out9);
@@ -950,11 +958,17 @@ int sr200pc10_sensor_init(const struct msm_camera_sensor_info *data)
 	if (data)
 		sr200pc10_ctrl->sensordata = data;
 
+	printk("new sr200pc10_sensor_init !!\n");
+	gpio_set_value(0, 0);//RESET	
+	gpio_set_value(1, 0);//STBY 
+	
+	cam_pw(1);
 
 	rc = cam_hw_init();
 	if (rc < 0) 
 	{
 		printk("<=PCAM=> cam_hw_init failed!\n");
+		cam_pw(0); // sleep current issue for sensor disconnection
 		goto init_fail;
 	}
 
@@ -998,6 +1012,8 @@ int sr200pc10_sensor_config(void __user *argp)
 
 	/* down(&sr200pc10_sem); */
 
+	printk("%s ++++ \n",__FUNCTION__);
+
 	CDBG("sr200pc10_ioctl, cfgtype = %d, mode = %d\n",
 		cfg_data.cfgtype, cfg_data.mode);
 
@@ -1013,31 +1029,23 @@ int sr200pc10_sensor_config(void __user *argp)
 			break;
 
 		case CFG_SET_BRIGHTNESS:
-#if 0
 			rc = sr200pc10_set_brightness(cfg_data.mode,
 						cfg_data.cfg.brightness);
-#endif
 			break;
 
 		case CFG_SET_WB:
-#if 0
 			rc = sr200pc10_set_whitebalance(cfg_data.mode,
 						cfg_data.cfg.whitebalance);
-#endif
 			break;
 
 		case CFG_SEND_WB_INFO:
-#if 0
 			rc = sr200pc10_set_ISO(cfg_data.mode,
 						cfg_data.cfg.iso);
-#endif
 			break;
 
 		case CFG_SET_EXPOSURE_MODE:
-#if 0
 			rc = sr200pc10_set_metering(cfg_data.mode,
 						cfg_data.cfg.metering);
-#endif
 			break;
 
 		case CFG_GET_AF_MAX_STEPS:
@@ -1072,7 +1080,7 @@ int sr200pc10_sensor_release(void)
 	sr200pc10_regs_table_exit();
 #endif
 
-
+	cam_pw(0);
 	return rc;
 }
 
@@ -1134,6 +1142,7 @@ static int sr200pc10_sensor_probe(const struct msm_camera_sensor_info *info,
 		goto probe_done;
 	}
 
+	cam_pw(1);
 
 	/* Input MCLK = 24MHz */
 	msm_camio_clk_rate_set(24000000);
@@ -1143,15 +1152,19 @@ static int sr200pc10_sensor_probe(const struct msm_camera_sensor_info *info,
 #if 0//bestiq
 	rc = sr200pc10_sensor_init_probe(info);
 	if (rc < 0)
+		cam_pw(0); // sleep current issue for sensor disconnection
 		goto probe_done;
 #endif
 
-
+	gpio_set_value(0, 0);//RESET
+	gpio_set_value(1, 0);//STBY
 	cam_pw(0); //TEMP
 
 	s->s_init = sr200pc10_sensor_init;
 	s->s_release = sr200pc10_sensor_release;
 	s->s_config  = sr200pc10_sensor_config;
+	s->s_camera_type = BACK_CAMERA_2D;
+	s->s_mount_angle = 0;
 
 
 
@@ -1162,6 +1175,7 @@ probe_done:
 
 static int __sr200pc10_probe(struct platform_device *pdev)
 {
+	printk("_sr200pc10_probe\n");
 	return msm_camera_drv_start(pdev, sr200pc10_sensor_probe);
 }
 
@@ -1175,6 +1189,7 @@ static struct platform_driver msm_camera_driver = {
 
 static int __init sr200pc10_init(void)
 {
+	printk("sr200pc10_init\n");
 	return platform_driver_register(&msm_camera_driver);
 }
 

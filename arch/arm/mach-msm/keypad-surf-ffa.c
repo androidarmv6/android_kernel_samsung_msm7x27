@@ -8,7 +8,7 @@
 #include "keypad-tassdt.c"
 #elif defined(CONFIG_MACH_LUCAS)
 #include "keypad-lucas.c"
-#elif defined(CONFIG_MACH_CALLISTO)
+#elif defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_EUROPA)
 #include "keypad-callisto.c"
 #elif defined(CONFIG_MACH_GIO)
 #include "keypad-gio.c"

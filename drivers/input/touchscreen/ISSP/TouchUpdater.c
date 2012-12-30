@@ -64,7 +64,7 @@ unsigned char Firmware_Data_HW1[]=
 #include "Firmware_TASS0C_HW01.h"
 #elif defined(CONFIG_MACH_TASSDT)
 #include "Firmware_TASSDT0C_HW01.h"
-#elif defined(CONFIG_MACH_CALLISTO)
+#elif defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_EUROPA)
 #include "Firmware_ver04.h"
 #elif defined(CONFIG_MACH_GIO)
 #include "Firmware_GIO03_HW01.h"
@@ -82,6 +82,8 @@ unsigned char Firmware_Data_HW2[]=
 #include "Firmware_ver04_HW02.h"
 #elif defined(CONFIG_MACH_GIO)
 #include "Firmware_GIO01_HW02.h"
+#elif defined(CONFIG_MACH_EUROPA)
+#include "Firmware_ver09_HW02.h"
 #endif
 };
 unsigned char Firmware_Data_HW3[]= 
