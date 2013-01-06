@@ -1125,12 +1125,12 @@ static struct resource kgsl_3d0_resources[] = {
 
 static struct kgsl_device_platform_data kgsl_3d0_pdata = {
 	.pwr_data = {
-		.pwrlevel = {
+		/*.pwrlevel = {
 			{
 				.gpu_freq = 128000000,
 				.bus_freq = 128000000,
 			},
-		},
+		},*/
 		.init_level = 0,
 		.num_levels = 1,
 		.set_grp_async = NULL,
