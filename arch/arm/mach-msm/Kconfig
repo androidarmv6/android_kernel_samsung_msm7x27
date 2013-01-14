@@ -208,6 +208,13 @@ config BOARD_REVISION
 	depends on MACH_EUROPA || MACH_CALLISTO || MACH_COOPER || MACH_GIO || MACH_BENI || MACH_TASS || MACH_TASSDT || MACH_LUCAS
 	default "0x01"
 
+config RECOVERY_REBOOT
+	bool "Recovery reboot fix for Samsung devices"
+	depends on MACH_EUROPA || MACH_CALLISTO || MACH_COOPER || MACH_GIO || MACH_BENI || MACH_TASS || MACH_TASSDT || MACH_LUCAS
+	default n
+	help
+	  Workaround for recovery looping issue on Samsung msm7x27 devices. Use only for building recovery kernels.
+
 config 800MHZ
 	bool "use 800MHz mode"
 	default y
