@@ -2119,6 +2119,12 @@ CONFIG_DPRAM=y
 CONFIG_DPRAM_WHITELIST=y
 
 #
+# ZRAM support
+#
+CONFIG_ZRAM=y
+# CONFIG_ZRAM_DEBUG is not set
+
+#
 # File systems
 #
 # CONFIG_EXT2_FS is not set
