@@ -60,6 +60,10 @@ extern int iommu_map(struct iommu_domain *domain, unsigned long iova,
 		     phys_addr_t paddr, int gfp_order, int prot);
 extern int iommu_unmap(struct iommu_domain *domain, unsigned long iova,
 		       int gfp_order);
+extern int iommu_map_range(struct iommu_domain *domain, unsigned int iova,
+                    struct scatterlist *sg, unsigned int len, int prot);
+extern int iommu_unmap_range(struct iommu_domain *domain, unsigned int iova,
+                      unsigned int len);
 extern phys_addr_t iommu_iova_to_phys(struct iommu_domain *domain,
 				      unsigned long iova);
 extern int iommu_domain_has_cap(struct iommu_domain *domain,
@@ -106,6 +110,19 @@ static inline int iommu_unmap(struct iommu_domain *domain, unsigned long iova,
 			      int gfp_order)
 {
 	return -ENODEV;
+}
+
+static inline int iommu_map_range(struct iommu_domain *domain,
+                                  unsigned int iova, struct scatterlist *sg,
+                                  unsigned int len, int prot)
+{
+        return -ENODEV;
+}
+
+static inline int iommu_unmap_range(struct iommu_domain *domain,
+                                    unsigned int iova, unsigned int len)
+{
+        return -ENODEV;
 }
 
 static inline phys_addr_t iommu_iova_to_phys(struct iommu_domain *domain,
