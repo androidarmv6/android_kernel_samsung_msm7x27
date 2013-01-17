@@ -836,6 +836,8 @@ void __init setup_arch(char **cmdline_p)
 	*cmdline_p = cmd_line;
 
 	parse_early_param();
+        if (mdesc->init_very_early)
+                mdesc->init_very_early();
 
 	paging_init(mdesc);
 	request_standard_resources(&meminfo, mdesc);
@@ -862,6 +864,9 @@ void __init setup_arch(char **cmdline_p)
 #endif
 #endif
 	early_trap_init();
+
+       if (mdesc->init_early)
+                mdesc->init_early();
 }
 
 
