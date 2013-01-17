@@ -2871,7 +2871,7 @@ config FB_BROADSHEET
 	  a bridge adapter.
 
 source "drivers/video/msm/Kconfig"
-
+source "drivers/gpu/ion/Kconfig"
 source "drivers/video/omap/Kconfig"
 source "drivers/video/omap2/Kconfig"
 

@@ -1094,6 +1094,14 @@ config MSM_ADSP_REPORT_EVENTS
 	  Normally, only messages from the aDSP are reported to userspace.
 	  With this option, we report events from the aDSP as well.
 
+config MSM_MULTIMEDIA_USE_ION
+        bool "Multimedia support using Ion"
+        depends on ION_MSM
+        help
+          Enable support for multimedia drivers using Ion for buffer management
+          instead of pmem. Selecting this may also involve userspace
+          dependencies as well.
+
 config MSM_QDSP6
 	tristate "QDSP6 support"
 	depends on ARCH_QSD8X50 && ANDROID_PMEM
