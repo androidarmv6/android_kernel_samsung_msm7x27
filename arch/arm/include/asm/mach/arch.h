@@ -41,6 +41,8 @@ struct machine_desc {
 	void			(*init_irq)(void);
 	struct sys_timer	*timer;		/* system tick timer	*/
 	void			(*init_machine)(void);
+        void                    (*init_very_early)(void);
+        void                    (*init_early)(void);
 };
 
 /*
