@@ -46,12 +46,15 @@
 #include <mach/board.h>
 #include <mach/pmic.h>
 #include <mach/msm_iomap.h>
+#ifdef CONFIG_ION_MSM
+#include <mach/ion.h>
+#endif
+#include <mach/msm_memtypes.h>
 #include <mach/msm_rpcrouter.h>
 #include <mach/msm_hsusb.h>
 #include <mach/rpc_hsusb.h>
 #include <mach/rpc_pmapp.h>
 #include <mach/msm_serial_hs.h>
-#include <mach/memory.h>
 #include <mach/msm_battery.h>
 #include <mach/rpc_server_handset.h>
 #include <mach/msm_tsif.h>
@@ -60,7 +63,13 @@
 #include <linux/mtd/nand.h>
 #include <linux/mtd/partitions.h>
 #include <linux/i2c.h>
+#ifdef CONFIG_ION_MSM
+#include <linux/ion.h>
+#endif
+#include <linux/memory.h>
+#ifdef CONFIG_ANDROID_PMEM
 #include <linux/android_pmem.h>
+#endif
 #include <mach/camera.h>
 
 #ifdef CONFIG_USB_G_ANDROID
@@ -91,16 +100,6 @@
 #endif
 #include <linux/i2c/europa_tsp_gpio.h>
 
-
-#ifdef CONFIG_ARCH_MSM7X25
-#define MSM_PMEM_MDP_SIZE	0xb21000
-#define MSM_PMEM_ADSP_SIZE	0x97b000
-#define MSM_FB_SIZE		0x200000
-#define PMEM_KERNEL_EBI1_SIZE	0x64000
-#endif
-
-#ifdef CONFIG_ARCH_MSM7X27
-#if defined(CONFIG_MACH_COOPER)
 #define MSM_PMEM_MDP_SIZE 	0x1B76000 // size = 23<<20; in gralloc.cpp
 #define MSM_PMEM_ADSP_SIZE 	0x9DE000  // 0x8DE000		// 3M :0x86E000, 2M : 0x77F000 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
@@ -108,12 +107,7 @@
 #else
 #define MSM_FB_SIZE 0x238000 // 0x238000 // 0x500000 //0x11C000 //0x5DC00
 #endif
-#define PMEM_KERNEL_EBI1_SIZE 	0x1C000 
-#endif	// CONFIG_MACH_CALLISTO
-#endif	// CONFIG_ARCH_MSM7X27
-
-//#if defined(CONFIG_MACH_EUROPA)
-//#endif
+#define PMEM_KERNEL_EBI1_SIZE 	0x1C000
 
 extern int board_hw_revision;
 
@@ -125,6 +119,14 @@ static int gpio_wlan_reset_n = 82;
 
 #define GPIO_JACK_S_35	28
 #define GPIO_SEND_END	29
+
+#define MSM_ION_MM_FW_SIZE	0x200000 /* (2MB) */
+#define MSM_ION_MM_SIZE		0x7800000 /* (120MB) */
+#define MSM_ION_QSECOM_SIZE	0x100000 /* (1MB) */
+#define MSM_ION_MFC_SIZE	SZ_8K
+#define MSM_ION_AUDIO_SIZE	0x2B4000
+#define MSM_ION_HEAP_NUM	8
+#define MSM_ION_SF_SIZE		0x2800000 /* 40 Mbytes */
 
 static struct sec_jack_zone jack_zones[] = {
 	[0] = {
@@ -553,6 +555,7 @@ static struct platform_device msm_device_adspdec = {
 	},
 };
 
+#ifdef CONFIG_ANDROID_PMEM
 static struct android_pmem_platform_data android_pmem_kernel_ebi1_pdata = {
 	.name = PMEM_KERNEL_EBI1_DATA_NAME,
 	/* if no allocator_type, defaults to PMEM_ALLOCATORTYPE_BITMAP,
@@ -593,6 +596,7 @@ static struct platform_device android_pmem_kernel_ebi1_device = {
 	.id = 4,
 	.dev = { .platform_data = &android_pmem_kernel_ebi1_pdata },
 };
+#endif
 
 static struct msm_handset_platform_data hs_platform_data = {
 	.hs_name = "7k_handset",
@@ -722,14 +726,6 @@ static void lcdc_s6d04m0_config_gpios(int enable)
 }
 #endif
 
-static char *msm_fb_lcdc_vreg[] = {
-	"ldo3"
-};
-
-static char *msm_fb_lcdc_vreg_rev02[] = {
-	"ldo4"
-};
-
 #define MSM_FB_LCDC_VREG_OP(name, op) \
 do { \
 	vreg = vreg_get(0, name); \
@@ -741,44 +737,9 @@ do { \
 
 static int msm_fb_lcdc_power_save(int on)
 {
-/*
-	struct vreg *vreg;
-	int i;
-	int array_size = 0;
-
-	if( board_hw_revision >= 0x3 )
-		array_size = ARRAY_SIZE(msm_fb_lcdc_vreg_rev02);
-	else
-		array_size = ARRAY_SIZE(msm_fb_lcdc_vreg);
-
-	for (i = 0; i < array_size; i++) {
-		if (on) {
-			if( board_hw_revision >= 0x3 )
-				MSM_FB_LCDC_VREG_OP(msm_fb_lcdc_vreg_rev02[i], enable);
-			else
-			MSM_FB_LCDC_VREG_OP(msm_fb_lcdc_vreg[i], enable);
-			vreg_set_level(vreg, OUT3000mV);
-			}
-		else{
-			if( board_hw_revision >= 0x3 )
-				MSM_FB_LCDC_VREG_OP(msm_fb_lcdc_vreg_rev02[i], disable);
-			else
-			MSM_FB_LCDC_VREG_OP(msm_fb_lcdc_vreg[i], disable);
-			// for avoiding potential rpc error
-			//gpio_tlmm_config(GPIO_CFG(GPIO_OUT_101, 0,
-			//GPIO_OUTPUT, GPIO_NO_PULL, GPIO_2MA), GPIO_ENABLE);
-// 20100823 hongkuk.son 
-			gpio_tlmm_config(GPIO_CFG(GPIO_OUT_101, 0, GPIO_OUTPUT, GPIO_NO_PULL, GPIO_2MA), GPIO_ENABLE);
-//
-			gpio_set_value(101, 0);
-			mdelay(15);
-			
-			gpio_set_value(101, 1);
-			mdelay(15);
-		}
-	}
-*/
+	return 0;
 }
+
 static struct lcdc_platform_data lcdc_pdata = {
 	.lcdc_gpio_config = msm_fb_lcdc_config,
 	.lcdc_power_save   = msm_fb_lcdc_power_save,
@@ -1812,7 +1773,7 @@ static struct i2c_gpio_platform_data sensor_i2c_gpio_data = {
 	.scl_pin    = 36,
 };
 
-static struct platform_device sensor_i2c_gpio_device = {  
+static struct platform_device sensor_i2c_gpio_device = {
 	.name       = "i2c-gpio",
 	.id     = 5,
 	.dev        = {
@@ -1820,6 +1781,109 @@ static struct platform_device sensor_i2c_gpio_device = {
 	},
 };
 
+#ifdef CONFIG_ION_MSM
+
+static struct ion_cp_heap_pdata cp_mm_ion_pdata = {
+	.permission_type = IPT_TYPE_MM_CARVEOUT,
+	.align = PAGE_SIZE,
+};
+
+static struct ion_cp_heap_pdata cp_mfc_ion_pdata = {
+	.permission_type = IPT_TYPE_MFC_SHAREDMEM,
+	.align = PAGE_SIZE,
+};
+
+static struct ion_co_heap_pdata co_ion_pdata = {
+	.adjacent_mem_id = INVALID_HEAP_ID,
+	.align = PAGE_SIZE,
+};
+
+static struct ion_co_heap_pdata fw_co_ion_pdata = {
+	.adjacent_mem_id = ION_CP_MM_HEAP_ID,
+	.align = SZ_128K,
+};
+
+/**
+ * These heaps are listed in the order they will be allocated. Due to
+ * video hardware restrictions and content protection the FW heap has to
+ * be allocated adjacent (below) the MM heap and the MFC heap has to be
+ * allocated after the MM heap to ensure MFC heap is not more than 256MB
+ * away from the base address of the FW heap.
+ * However, the order of FW heap and MM heap doesn't matter since these
+ * two heaps are taken care of by separate code to ensure they are adjacent
+ * to each other.
+ * Don't swap the order unless you know what you are doing!
+ */
+static struct ion_platform_data ion_pdata = {
+	.nr = MSM_ION_HEAP_NUM,
+	.heaps = {
+		{
+			.id	= ION_SYSTEM_HEAP_ID,
+			.type	= ION_HEAP_TYPE_SYSTEM,
+			.name	= ION_VMALLOC_HEAP_NAME,
+		},
+		{
+			.id	= ION_CP_MM_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CP,
+			.name	= ION_MM_HEAP_NAME,
+			.size	= MSM_ION_MM_SIZE,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *) &cp_mm_ion_pdata,
+		},
+		{
+			.id	= ION_MM_FIRMWARE_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CARVEOUT,
+			.name	= ION_MM_FIRMWARE_HEAP_NAME,
+			.size	= MSM_ION_MM_FW_SIZE,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *) &fw_co_ion_pdata,
+		},
+		{
+			.id	= ION_CP_MFC_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CP,
+			.name	= ION_MFC_HEAP_NAME,
+			.size	= MSM_ION_MFC_SIZE,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *) &cp_mfc_ion_pdata,
+		},
+		{
+			.id	= ION_SF_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CARVEOUT,
+			.name	= ION_SF_HEAP_NAME,
+			.size	= MSM_ION_SF_SIZE,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *) &co_ion_pdata,
+		},
+		{
+			.id	= ION_IOMMU_HEAP_ID,
+			.type	= ION_HEAP_TYPE_IOMMU,
+			.name	= ION_IOMMU_HEAP_NAME,
+		},
+		{
+			.id	= ION_QSECOM_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CARVEOUT,
+			.name	= ION_QSECOM_HEAP_NAME,
+			.size	= MSM_ION_QSECOM_SIZE,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *) &co_ion_pdata,
+		},
+		{
+			.id	= ION_AUDIO_HEAP_ID,
+			.type	= ION_HEAP_TYPE_CARVEOUT,
+			.name	= ION_AUDIO_HEAP_NAME,
+			.size	= MSM_ION_AUDIO_SIZE,
+			.memory_type = ION_EBI_TYPE,
+			.extra_data = (void *) &co_ion_pdata,
+		},
+	}
+};
+
+static struct platform_device ion_dev = {
+        .name = "ion-msm",
+        .id = 1,
+        .dev = { .platform_data = &ion_pdata },
+};
+#endif
 
 static struct platform_device *devices[] __initdata = {
 #if !defined(CONFIG_MSM_SERIAL_DEBUGGER)
@@ -1847,9 +1911,11 @@ static struct platform_device *devices[] __initdata = {
 	&fsa9280_i2c_gpio_device,
 	&sensor_i2c_gpio_device,
 	&smc91x_device,
+#ifdef CONFIG_ANDROID_PMEM
 	&android_pmem_kernel_ebi1_device,
 	&android_pmem_device,
 	&android_pmem_adsp_device,
+#endif
 	&msm_fb_device,
 #ifdef CONFIG_FB_MSM_LCDC_S6D04M0_QVGA
 	&lcdc_s6d04m0_panel_device,
@@ -1858,7 +1924,7 @@ static struct platform_device *devices[] __initdata = {
 	&lcdc_s6d04d1_panel_device,
 #endif
 #ifdef CONFIG_FB_MSM_LCDC_TA8566_WQVGA
-		&lcdc_ta8566_panel_device,
+	&lcdc_ta8566_panel_device,
 #endif
 /* 20100823 hongkuk.son */
 #ifdef CONFIG_FB_MSM_LCDC_S6D16A0X_HVGA
@@ -2691,7 +2757,9 @@ static void __init msm7x2x_init(void)
 	msm_gadget_pdata.self_powered = 1;
 #endif
 #endif
-
+#ifdef CONFIG_ION_MSM
+	platform_device_register(&ion_dev);
+#endif
 #ifdef CONFIG_SAMSUNG_JACK
 	sec_jack_gpio_init();
 #endif
@@ -2708,32 +2776,14 @@ static void __init msm7x2x_init(void)
 	config_camera_off_gpios(); /* might not be necessary */
 #endif
 	msm_device_i2c_init();
-	
-#if 0	//ino.baek 2010-08-26 : Changed Cooper H/W rev 0x3 -> 0x1	
-	// WLAN_RESET_N 
-	if( board_hw_revision < 3 )
-		gpio_wlan_reset_n = 78;
-		
-	if( board_hw_revision )
-	{
-		i2c_register_board_info(0, i2c_devices_new, ARRAY_SIZE(i2c_devices_new));
-		i2c_register_board_info(2, touch_i2c_devices, ARRAY_SIZE(touch_i2c_devices));
-		i2c_register_board_info(3, mus_i2c_devices_new, ARRAY_SIZE(mus_i2c_devices_new));
-	}
-	else
-	{
-	i2c_register_board_info(0, i2c_devices, ARRAY_SIZE(i2c_devices));
-	i2c_register_board_info(2, touch_i2c_devices, ARRAY_SIZE(touch_i2c_devices));
-	i2c_register_board_info(3, mus_i2c_devices, ARRAY_SIZE(mus_i2c_devices));
-	}
-#else
+
 	if( board_hw_revision >= 3 )
 		i2c_register_board_info(0, cam_i2c_devices, ARRAY_SIZE(cam_i2c_devices));
 	else
 		i2c_register_board_info(0, sensor_i2c_devices, ARRAY_SIZE(sensor_i2c_devices));
 	i2c_register_board_info(2, touch_i2c_devices, ARRAY_SIZE(touch_i2c_devices));
 	i2c_register_board_info(3, mus_i2c_devices_new, ARRAY_SIZE(mus_i2c_devices_new));
-#endif
+
 	if( board_hw_revision >= 3 )
 		i2c_register_board_info(5, sensor_i2c_devices, ARRAY_SIZE(sensor_i2c_devices));
 	else
