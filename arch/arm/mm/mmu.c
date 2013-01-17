@@ -213,7 +213,7 @@ static struct mem_type mem_types[] = {
 		.prot_l1	= PMD_TYPE_TABLE,
 		.prot_sect	= PROT_SECT_DEVICE | PMD_SECT_WB,
 		.domain		= DOMAIN_IO,
-	},	
+	},
 	[MT_DEVICE_STRONGLY_ORDERED] = {  /* Guaranteed strongly ordered */
 		.prot_pte       = PROT_PTE_DEVICE,
 		.prot_l1        = PMD_TYPE_TABLE,
