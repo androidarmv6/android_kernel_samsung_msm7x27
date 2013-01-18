@@ -37,6 +37,7 @@
 #include <linux/proc_fs.h>
 
 #include <asm/system.h>
+#include <asm/mach/arch.h>
 #include <asm/mach/irq.h>
 #include <asm/mach/time.h>
 
@@ -49,7 +50,6 @@
 #define irq_finish(irq) do { } while (0)
 #endif
 
-void (*init_arch_irq)(void) __initdata = NULL;
 unsigned long irq_err_count;
 
 int show_interrupts(struct seq_file *p, void *v)
@@ -160,7 +160,7 @@ void __init init_IRQ(void)
 	for (irq = 0; irq < NR_IRQS; irq++)
 		irq_desc[irq].status |= IRQ_NOREQUEST | IRQ_NOPROBE;
 
-	init_arch_irq();
+	machine_desc->init_irq();
 }
 
 #ifdef CONFIG_HOTPLUG_CPU
