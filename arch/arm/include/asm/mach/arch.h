@@ -21,7 +21,7 @@ struct machine_desc {
 	 */
 	unsigned int		nr;		/* architecture number	*/
 	unsigned int		phys_io;	/* start of physical io	*/
-	unsigned int		io_pg_offst;	/* byte offset for io 
+	unsigned int		io_pg_offst;	/* byte offset for io
 						 * page tabe entry	*/
 
 	const char		*name;		/* architecture name	*/
@@ -38,6 +38,7 @@ struct machine_desc {
 					 struct tag *, char **,
 					 struct meminfo *);
 	void			(*map_io)(void);/* IO mapping function	*/
+	void                    (*init_early)(void);
 	void			(*init_irq)(void);
 	struct sys_timer	*timer;		/* system tick timer	*/
 	void			(*init_machine)(void);
