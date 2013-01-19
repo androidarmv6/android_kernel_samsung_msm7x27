@@ -62,6 +62,11 @@
 #include <linux/android_pmem.h>
 #include <mach/camera.h>
 
+#ifdef CONFIG_ION_MSM
+#include <linux/ion.h>
+#include <mach/ion.h>
+#endif
+
 #ifdef CONFIG_USB_G_ANDROID
 #include <linux/usb/android.h>
 #include <mach/usbdiag.h>
@@ -97,7 +102,9 @@
 #else
 #define MSM_FB_SIZE 0x238000
 #endif
-#define PMEM_KERNEL_EBI1_SIZE 	0x1C000
+
+#define PMEM_KERNEL_EBI1_SIZE  0x1C000
+#define MSM_ION_EBI_SIZE        SZ_8M
 
 extern int board_hw_revision;
 
@@ -1613,6 +1620,25 @@ static struct platform_device sensor_i2c_gpio_device = {
 	},
 };
 
+#ifdef CONFIG_ION_MSM
+
+struct ion_platform_data ion_pdata = {
+        .nr = 1,
+        .heaps = {
+                {
+                        .id     = ION_SYSTEM_HEAP_ID,
+                        .type   = ION_HEAP_TYPE_SYSTEM,
+                        .name   = ION_VMALLOC_HEAP_NAME,
+                },
+        }
+};
+
+static struct platform_device ion_dev = {
+	.name = "ion-msm",
+	.id = 1,
+	.dev = { .platform_data = &ion_pdata },
+};
+#endif
 
 static struct platform_device *devices[] __initdata = {
 #if !defined(CONFIG_MSM_SERIAL_DEBUGGER)
@@ -1639,9 +1665,14 @@ static struct platform_device *devices[] __initdata = {
 	&sensor_i2c_gpio_device,
 	&smc91x_device,
 	&android_pmem_kernel_ebi1_device,
+#ifdef CONFIG_ANDROID_PMEM
 	&android_pmem_device,
 	&android_pmem_adsp_device,
+#endif
 	&msm_fb_device,
+#ifdef CONFIG_ION_MSM
+	&ion_dev,
+#endif
 #ifdef CONFIG_FB_MSM_LCDC_S6D04M0_QVGA
 	&lcdc_s6d04m0_panel_device,
 #endif
