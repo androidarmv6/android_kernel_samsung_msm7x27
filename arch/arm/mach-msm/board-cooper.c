@@ -62,6 +62,11 @@
 #include <linux/android_pmem.h>
 #include <mach/camera.h>
 
+#ifdef CONFIG_ION_MSM
+#include <linux/ion.h>
+#include <mach/ion.h>
+#endif
+
 #ifdef CONFIG_USB_G_ANDROID
 #include <linux/usb/android.h>
 #include <mach/usbdiag.h>
@@ -97,7 +102,9 @@
 #else
 #define MSM_FB_SIZE 0x238000
 #endif
-#define PMEM_KERNEL_EBI1_SIZE 	0x1C000
+
+#define PMEM_KERNEL_EBI1_SIZE  0x1C000
+#define MSM_ION_EBI_SIZE        SZ_8M
 
 extern int board_hw_revision;
 
@@ -1613,6 +1620,49 @@ static struct platform_device sensor_i2c_gpio_device = {
 	},
 };
 
+#ifdef CONFIG_ION_MSM
+
+/**
+ * These heaps are listed in the order they will be allocated. Due to
+ * video hardware restrictions and content protection the FW heap has to
+ * be allocated adjacent (below) the MM heap and the MFC heap has to be
+ * allocated after the MM heap to ensure MFC heap is not more than 256MB
+ * away from the base address of the FW heap.
+ * However, the order of FW heap and MM heap doesn't matter since these
+ * two heaps are taken care of by separate code to ensure they are adjacent
+ * to each other.
+ * Don't swap the order unless you know what you are doing!
+ */
+
+struct ion_platform_data ion_pdata = {
+        .nr = 3,
+        .heaps = {
+                {
+                        .id     = ION_HEAP_SYSTEM_ID,
+                        .type   = ION_HEAP_TYPE_SYSTEM,
+                        .name   = ION_KMALLOC_HEAP_NAME,
+                },
+                {
+                        .id     = ION_HEAP_SYSTEM_CONTIG_ID,
+                        .type   = ION_HEAP_TYPE_SYSTEM_CONTIG,
+                        .name   = ION_VMALLOC_HEAP_NAME,
+                },
+                {
+                        .id     = ION_HEAP_EBI_ID,
+                        .type   = ION_HEAP_TYPE_CARVEOUT,
+                        .name   = ION_EBI1_HEAP_NAME,
+                        .size   = MSM_ION_EBI_SIZE,
+                        .memory_type = ION_EBI_TYPE,
+                },
+        }
+};
+
+static struct platform_device ion_dev = {
+	.name = "ion-msm",
+	.id = 1,
+	.dev = { .platform_data = &ion_pdata },
+};
+#endif
 
 static struct platform_device *devices[] __initdata = {
 #if !defined(CONFIG_MSM_SERIAL_DEBUGGER)
@@ -1639,9 +1689,14 @@ static struct platform_device *devices[] __initdata = {
 	&sensor_i2c_gpio_device,
 	&smc91x_device,
 	&android_pmem_kernel_ebi1_device,
+#ifdef CONFIG_ANDROID_PMEM
 	&android_pmem_device,
 	&android_pmem_adsp_device,
+#endif
 	&msm_fb_device,
+#ifdef CONFIG_ION_MSM
+	&ion_dev,
+#endif
 #ifdef CONFIG_FB_MSM_LCDC_S6D04M0_QVGA
 	&lcdc_s6d04m0_panel_device,
 #endif
