@@ -990,79 +990,6 @@ static struct platform_device msm_device_pmic_leds = {
 	.id = -1,
 };
 
-static struct i2c_board_info i2c_devices[] = {
-#ifdef CONFIG_S5K5CA //PGH
-	{
-		I2C_BOARD_INFO("s5k5ca", 0x78>>1),
-	},
-#endif
-#ifdef CONFIG_SR200PC10 //PGH
-	{
-		I2C_BOARD_INFO("sr200pc10", 0x40>>1),
-	},
-#endif
-#ifdef CONFIG_S5K4CA //PGH
-	{
-		I2C_BOARD_INFO("s5k4ca", 0x5A>>1),
-	},
-#endif
-#ifdef CONFIG_MT9D112
-	{
-		I2C_BOARD_INFO("mt9d112", 0x78 >> 1),
-	},
-#endif
-#ifdef CONFIG_S5K3E2FX
-	{
-		I2C_BOARD_INFO("s5k3e2fx", 0x20 >> 1),
-	},
-#endif
-#ifdef CONFIG_MT9P012
-	{
-		I2C_BOARD_INFO("mt9p012", 0x6C >> 1),
-	},
-#endif
-#ifdef CONFIG_MT9P012_KM
-	{
-		I2C_BOARD_INFO("mt9p012_km", 0x6C >> 2),
-	},
-#endif
-#if defined(CONFIG_MT9T013) || defined(CONFIG_SENSORS_MT9T013)
-	{
-		I2C_BOARD_INFO("mt9t013", 0x6C),
-	},
-#endif
-#ifdef CONFIG_VB6801
-	{
-		I2C_BOARD_INFO("vb6801", 0x20),
-	},
-#endif
-#ifdef CONFIG_SENSORS_MMC31XX
-	{
-		I2C_BOARD_INFO(MMC31XX_I2C_NAME,  MMC31XX_I2C_ADDR),
-	},
-#endif
-#ifdef CONFIG_SENSORS_BMA_ACCEL
-	{
-		I2C_BOARD_INFO("bma_accel",0x08), // [HSS]  0X18 => 0X08 (2010.09.29)
-	},
-#endif
-#ifdef CONFIG_SENSORS_KR3D_ACCEL
-	{
-		I2C_BOARD_INFO("kr3dm_accel",KR3DM_I2C_ADDR >> 1),
-	},
-#endif
-#ifdef CONFIG_AMP_MAX97000
-	{
-		I2C_BOARD_INFO("max97000",0x9A>>1),
-	},
-#endif
-#ifdef CONFIG_RADIO_SI4709
-	{
-		I2C_BOARD_INFO("Si4709",0x20>>1),
-	},
-#endif
-};
-
 static struct i2c_board_info touch_i2c_devices[] = {
 #ifdef CONFIG_TOUCHSCREEN_SYNAPTICS_I2C_RMI4
 	{
@@ -1077,18 +1004,6 @@ static struct i2c_board_info touch_i2c_devices[] = {
 	},
 #endif
 };
-
-static struct i2c_board_info mus_i2c_devices[] = {
-	{
-		I2C_BOARD_INFO("fsa9280", 0x4A>>1),
-	},
-#ifdef CONFIG_SENSORS_TAOS
-	{
-		I2C_BOARD_INFO("taos", 0x39),
-	},
-#endif
-};
-
 
 static struct i2c_board_info cam_i2c_devices[] = {
 #ifdef CONFIG_ISX006
@@ -1126,7 +1041,7 @@ static struct i2c_board_info sensor_i2c_devices[] = {
 #endif
 };
 
-static struct i2c_board_info mus_i2c_devices_new[] = {
+static struct i2c_board_info mus_i2c_devices[] = {
 	{
         	I2C_BOARD_INFO("fsa9280", 0x4A>>1),
 	},
@@ -2445,7 +2360,7 @@ static void __init msm7x2x_init(void) {
 	}
 
 	i2c_register_board_info(2, touch_i2c_devices, ARRAY_SIZE(touch_i2c_devices));
-	i2c_register_board_info(3, mus_i2c_devices_new, ARRAY_SIZE(mus_i2c_devices_new));
+	i2c_register_board_info(3, mus_i2c_devices, ARRAY_SIZE(mus_i2c_devices));
 
 	if( board_hw_revision >= 3 ) {
 		i2c_register_board_info(5, sensor_i2c_devices, ARRAY_SIZE(sensor_i2c_devices));
