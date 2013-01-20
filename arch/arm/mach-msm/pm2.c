@@ -1798,7 +1798,9 @@ static void msm_pm_power_off(void)
 #if !defined(CONFIG_MACH_EUROPA) && !defined(CONFIG_MACH_CALLISTO) && !defined(CONFIG_MACH_COOPER) && !defined(CONFIG_MACH_GIO) && !defined(CONFIG_MACH_BENI) && !defined(CONFIG_MACH_TASS) && !defined(CONFIG_MACH_TASSDT) && !defined(CONFIG_MACH_LUCAS)
 	msm_proc_comm(PCOM_POWER_DOWN, 0, 0);
 #else
+#if defined(CONFIG_RECOVERY_REBOOT) && (defined(CONFIG_MACH_EUROPA) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS))
 	set_recovery_mode_done();
+#endif
 	smem_flag->info = 0x0;
 	printk("request_phone_power_off\n");
 	request_phone_power_off_reset(1);
