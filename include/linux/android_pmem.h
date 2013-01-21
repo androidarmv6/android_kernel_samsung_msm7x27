@@ -136,8 +136,6 @@ int32_t pmem_kfree(const int32_t physaddr);
 struct android_pmem_platform_data
 {
 	const char* name;
-	/* starting physical address of memory region */
-	unsigned long start;
 	/* size of memory region */
 	unsigned long size;
 
@@ -156,6 +154,8 @@ struct android_pmem_platform_data
 	unsigned buffered;
 	/* This PMEM is on memory that may be powered off */
 	unsigned unstable;
+	/* which memory type (i.e. SMI, EBI1) this PMEM device is backed by */
+	unsigned memory_type;
 };
 
 int pmem_setup(struct android_pmem_platform_data *pdata,
