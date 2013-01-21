@@ -17,30 +17,14 @@
 
 #include "mm.h"
 
-/*
- * Reserve the various regions of node 0
- */
-void __init reserve_node_zero(pg_data_t *pgdat)
+void __init arm_mm_memblock_reserve(void)
 {
-	/*
-	 * Register the kernel text and data with bootmem.
-	 * Note that this can only be in node 0.
-	 */
-#ifdef CONFIG_XIP_KERNEL
-	reserve_bootmem_node(pgdat, __pa(_data), _end - _data,
-			BOOTMEM_DEFAULT);
-#else
-	reserve_bootmem_node(pgdat, __pa(_stext), _end - _stext,
-			BOOTMEM_DEFAULT);
-#endif
-
-	/*
-	 * Register the exception vector page.
-	 * some architectures which the DRAM is the exception vector to trap,
-	 * alloc_page breaks with error, although it is not NULL, but "0."
-	 */
-	reserve_bootmem_node(pgdat, CONFIG_VECTORS_BASE, PAGE_SIZE,
-			BOOTMEM_DEFAULT);
+        /*
+         * Register the exception vector page.
+         * some architectures which the DRAM is the exception vector to trap,
+         * alloc_page breaks with error, although it is not NULL, but "0."
+         */
+        memblock_reserve(CONFIG_VECTORS_BASE, PAGE_SIZE);
 }
 
 /*
@@ -49,7 +33,7 @@ void __init reserve_node_zero(pg_data_t *pgdat)
  */
 void __init paging_init(struct machine_desc *mdesc)
 {
-	bootmem_init();
+	bootmem_init(mdesc);
 }
 
 /*

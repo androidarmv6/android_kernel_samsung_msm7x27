@@ -33,6 +33,7 @@
 #include <asm/cacheflush.h>
 #include <asm/sizes.h>
 #include <linux/pm_runtime.h>
+#include <linux/memory_alloc.h>
 
 #define PMEM_MAX_USER_SPACE_DEVICES (10)
 #define PMEM_MAX_KERNEL_SPACE_DEVICES (2)
@@ -163,6 +164,8 @@ struct pmem_info {
 	unsigned long garbage_pfn;
 	/* memory state (stable/unstable with or without memory */
 	int memory_state;
+	/* which memory type (i.e. SMI, EBI1) this PMEM device is backed by */
+	unsigned memory_type;
 
 	char name[PMEM_NAME_SIZE];
 
@@ -178,7 +181,6 @@ struct pmem_info {
 	int (*free_space)(int, struct pmem_freespace *);
 	unsigned long (*len)(int, struct pmem_data *);
 	unsigned long (*start_addr)(int, struct pmem_data *);
-	int (*kapi_free_index)(const int32_t, int);
 
 	/* actual size of memory element, e.g.: (4 << 10) is 4K */
 	unsigned int quantum;
@@ -1559,14 +1561,13 @@ static int pmem_mmap(struct file *file, struct vm_area_struct *vma)
 	int index;
 	unsigned long vma_size =  vma->vm_end - vma->vm_start;
 	int ret = 0, id = get_id(file);
-
+#if PMEM_DEBUG_MSGS
+	char currtask_name[FIELD_SIZEOF(struct task_struct, comm) + 1];
+#endif
 	if (!data) {
 		pr_err("pmem: Invalid file descriptor, no private data\n");
 		return -EINVAL;
 	}
-#if PMEM_DEBUG_MSGS
-	char currtask_name[FIELD_SIZEOF(struct task_struct, comm) + 1];
-#endif
 	DLOG("pid %u(%s) mmap vma_size %lu on dev %s(id: %d)\n", current->pid,
 		get_task_comm(currtask_name, current), vma_size,
 		get_name(file), id);
@@ -1952,144 +1953,6 @@ int pmem_cache_maint(struct file *file, unsigned int cmd,
 	return 0;
 }
 EXPORT_SYMBOL(pmem_cache_maint);
-
-int32_t pmem_kalloc(const size_t size, const uint32_t flags)
-{
-	int info_id, i, memtype, fallback = 0;
-	unsigned int align;
-	int32_t index = -1;
-
-	switch (flags & PMEM_ALIGNMENT_MASK) {
-	case PMEM_ALIGNMENT_4K:
-		align = SZ_4K;
-		break;
-	case PMEM_ALIGNMENT_1M:
-		align = SZ_1M;
-		break;
-	default:
-		pr_alert("pmem: %s: Invalid alignment %#x\n",
-			__func__, (flags & PMEM_ALIGNMENT_MASK));
-		return -EINVAL;
-	}
-
-	memtype = flags & PMEM_MEMTYPE_MASK;
-retry_memalloc:
-	info_id = -1;
-	for (i = 0; i < ARRAY_SIZE(kapi_memtypes); i++)
-		if (kapi_memtypes[i].memtype == memtype) {
-			info_id = kapi_memtypes[i].info_id;
-			break;
-		}
-	if (info_id < 0) {
-		pr_alert("pmem: %s: Kernel %#x memory arena is not "
-			"initialized. Check board file!\n",
-			__func__, (flags & PMEM_MEMTYPE_MASK));
-		return -EINVAL;
-	}
-
-	if (!pmem[info_id].allocate) {
-		pr_alert("pmem: %s: Attempt to allocate size %u, alignment %#x"
-			" from non-existent PMEM kernel region %d. "
-			"Driver/board setup is faulty!",
-			__func__, size, (flags & PMEM_ALIGNMENT_MASK),
-			info_id);
-		return -ENOMEM;
-	}
-
-#if PMEM_DEBUG
-	if (align != SZ_4K &&
-			(pmem[info_id].allocator_type ==
-				PMEM_ALLOCATORTYPE_ALLORNOTHING ||
-			pmem[info_id].allocator_type ==
-				PMEM_ALLOCATORTYPE_BUDDYBESTFIT))
-		pr_warning("pmem: %s: alignment other than on 4K "
-			"pages not supported with %s allocator for PMEM "
-			"memory region '%s'. Memory will be aligned to 4K "
-			"boundary. Check your board file or allocation "
-			"invocation.\n", __func__,
-			(pmem[info_id].allocator_type ==
-				PMEM_ALLOCATORTYPE_ALLORNOTHING ?
-					"'All Or Nothing'"
-					:
-					"'Buddy / Best Fit'"),
-			pmem[info_id].dev.name);
-#endif
-
-	mutex_lock(&pmem[info_id].arena_mutex);
-	index = pmem[info_id].allocate(info_id, size, align);
-	mutex_unlock(&pmem[info_id].arena_mutex);
-
-	if (index < 0 &&
-		!fallback &&
-		kapi_memtypes[i].fallback_memtype != PMEM_INVALID_MEMTYPE) {
-		fallback = 1;
-		memtype = kapi_memtypes[i].fallback_memtype;
-		goto retry_memalloc;
-	}
-
-	return index >= 0 ?
-		index * pmem[info_id].quantum + pmem[info_id].base : -ENOMEM;
-}
-EXPORT_SYMBOL(pmem_kalloc);
-
-static int pmem_kapi_free_index_allornothing(const int32_t physaddr, int id)
-{
-	return physaddr == pmem[id].base ? 0 : -1;
-}
-
-static int pmem_kapi_free_index_buddybestfit(const int32_t physaddr, int id)
-{
-	return (physaddr >= pmem[id].base &&
-		physaddr < (pmem[id].base + pmem[id].size &&
-		!(physaddr % pmem[id].quantum))) ?
-		(physaddr - pmem[id].base) / pmem[id].quantum : -1;
-}
-
-static int pmem_kapi_free_index_bitmap(const int32_t physaddr, int id)
-{
-	return (physaddr >= pmem[id].base &&
-		physaddr < (pmem[id].base + pmem[id].size)) ?
-		bit_from_paddr(id, physaddr) : -1;
-}
-
-static int pmem_kapi_free_index_system(const int32_t physaddr, int id)
-{
-	return 0;
-}
-
-int pmem_kfree(const int32_t physaddr)
-{
-	int i;
-	for (i = 0; i < ARRAY_SIZE(kapi_memtypes); i++) {
-		int index;
-		int id = kapi_memtypes[i].info_id;
-
-		if (id < 0)
-			continue;
-
-		if (!pmem[id].allocate) {
-#if PMEM_DEBUG
-			pr_alert("pmem: %s: "
-				"Attempt to free physical address %#x "
-				"from unregistered PMEM kernel region"
-				" %d. Driver/board setup is faulty!",
-				__func__, physaddr, id);
-#endif
-			return -EINVAL;
-		}
-
-		index = pmem[id].kapi_free_index(physaddr, id);
-		if (index >= 0)
-			return pmem[id].free(id, index) ?  -EINVAL : 0;
-	}
-#if PMEM_DEBUG
-	pr_alert("pmem: %s: Failed to free physaddr %#x, does not "
-		"seem be value returned by pmem_kalloc()!",
-		__func__, physaddr);
-#endif
-	return -EINVAL;
-}
-EXPORT_SYMBOL(pmem_kfree);
 
 static int pmem_connect(unsigned long connect, struct file *file)
 {
@@ -2858,16 +2721,6 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 		goto err_reset_pmem_info;
 	}
 
-	if (pdata->start % pmem[id].quantum) {
-		/* bad alignment for start! */
-		pr_alert("pmem: %s: Unable to register driver %s - "
-			"improperly aligned memory region start address "
-			"(%#lx) as checked against quantum value of %#x!\n",
-			__func__, pdata->name, pdata->start,
-			pmem[id].quantum);
-		goto err_reset_pmem_info;
-	}
-
 	if (pdata->size % pmem[id].quantum) {
 		/* bad alignment for size! */
 		pr_alert("pmem: %s: Unable to register driver %s - "
@@ -2879,7 +2732,6 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 
 	pmem[id].cached = pdata->cached;
 	pmem[id].buffered = pdata->buffered;
-	pmem[id].base = pdata->start;
 	pmem[id].size = pdata->size;
 	strlcpy(pmem[id].name, pdata->name, PMEM_NAME_SIZE);
 
@@ -2898,7 +2750,6 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 		pmem[id].allocate = pmem_allocator_all_or_nothing;
 		pmem[id].free = pmem_free_all_or_nothing;
 		pmem[id].free_space = pmem_free_space_all_or_nothing;
-		pmem[id].kapi_free_index = pmem_kapi_free_index_allornothing;
 		pmem[id].len = pmem_len_all_or_nothing;
 		pmem[id].start_addr = pmem_start_addr_all_or_nothing;
 		pmem[id].num_entries = 1;
@@ -2930,7 +2781,6 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 		pmem[id].allocate = pmem_allocator_buddy_bestfit;
 		pmem[id].free = pmem_free_buddy_bestfit;
 		pmem[id].free_space = pmem_free_space_buddy_bestfit;
-		pmem[id].kapi_free_index = pmem_kapi_free_index_buddybestfit;
 		pmem[id].len = pmem_len_buddy_bestfit;
 		pmem[id].start_addr = pmem_start_addr_buddy_bestfit;
 		if (kobject_init_and_add(&pmem[id].kobj,
@@ -2980,7 +2830,6 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 		pmem[id].allocate = pmem_allocator_bitmap;
 		pmem[id].free = pmem_free_bitmap;
 		pmem[id].free_space = pmem_free_space_bitmap;
-		pmem[id].kapi_free_index = pmem_kapi_free_index_bitmap;
 		pmem[id].len = pmem_len_bitmap;
 		pmem[id].start_addr = pmem_start_addr_bitmap;
 
@@ -3009,7 +2858,6 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 		pmem[id].allocate = pmem_allocator_system;
 		pmem[id].free = pmem_free_system;
 		pmem[id].free_space = pmem_free_space_system;
-		pmem[id].kapi_free_index = pmem_kapi_free_index_system;
 		pmem[id].len = pmem_len_system;
 		pmem[id].start_addr = pmem_start_addr_system;
 		pmem[id].num_entries = 0;
@@ -3051,6 +2899,9 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 	if (pmem[id].memory_state == MEMORY_UNSTABLE_NO_MEMORY_ALLOCATED)
 		return 0;
 
+	pmem[id].base = allocate_contiguous_memory_nomap(pmem[id].size,
+		pmem[id].memory_type, PAGE_SIZE);
+
 	if ((!is_kernel_memtype) &&
 		(pmem[id].allocator_type != PMEM_ALLOCATORTYPE_SYSTEM)) {
 		ioremap_pmem(id);
@@ -3060,6 +2911,9 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 			goto error_cant_remap;
 		}
 	}
+
+	pr_info("allocating %lu bytes at %p (%lx physical) for %s\n",
+		pmem[id].size, pmem[id].vbase, pmem[id].base, pmem[id].name);
 
 	pmem[id].garbage_pfn = page_to_pfn(alloc_page(GFP_KERNEL));
 

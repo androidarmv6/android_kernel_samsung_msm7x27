@@ -28,6 +28,7 @@
 #ifdef CONFIG_MEMORY_HOTPLUG
 #include <linux/memory_hotplug.h>
 #endif
+#include <linux/memblock.h>
 
 #include <asm/unified.h>
 #include <asm/cpu.h>
@@ -408,13 +409,12 @@ static int __init arm_add_memory(unsigned long start, unsigned long size)
 	size -= start & ~PAGE_MASK;
 	bank->start = PAGE_ALIGN(start);
 	bank->size  = size & PAGE_MASK;
-	bank->node  = PHYS_TO_NID(start);
 
 	/*
 	 * Check whether this memory region has non-zero size or
 	 * invalid node number.
 	 */
-	if (bank->size == 0 || bank->node >= MAX_NUMNODES)
+	if (bank->size == 0)
 		return -EINVAL;
 
 	meminfo.nr_banks++;
@@ -836,6 +836,7 @@ void __init setup_arch(char **cmdline_p)
 	*cmdline_p = cmd_line;
 
 	parse_early_param();
+	arm_memblock_init(&meminfo, mdesc);
 
 	paging_init(mdesc);
 	request_standard_resources(&meminfo, mdesc);
