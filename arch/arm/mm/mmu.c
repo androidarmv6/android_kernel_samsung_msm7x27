@@ -17,7 +17,6 @@
 #include <linux/sort.h>
 
 #include <asm/cputype.h>
-#include <asm/mach-types.h>
 #include <asm/sections.h>
 #include <asm/cachetype.h>
 #include <asm/setup.h>
@@ -1080,7 +1079,7 @@ void __init paging_init(struct machine_desc *mdesc)
 	sanity_check_meminfo();
 	prepare_page_table();
 	map_lowmem();
-	bootmem_init();
+	bootmem_init(mdesc);
 	devicemaps_init(mdesc);
 	kmap_init();
 
