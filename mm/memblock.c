@@ -15,8 +15,6 @@
 #include <linux/bitops.h>
 #include <linux/memblock.h>
 
-#define MEMBLOCK_ALLOC_ANYWHERE	0
-
 struct memblock memblock;
 
 static int memblock_debug;
@@ -370,7 +368,7 @@ u64 __init memblock_alloc_nid(u64 size, u64 align, int nid,
 
 u64 __init memblock_alloc(u64 size, u64 align)
 {
-	return memblock_alloc_base(size, align, MEMBLOCK_ALLOC_ANYWHERE);
+	return memblock_alloc_base(size, align, MEMBLOCK_ALLOC_ACCESSIBLE);
 }
 
 u64 __init memblock_alloc_base(u64 size, u64 align, u64 max_addr)
@@ -396,10 +394,8 @@ u64 __init __memblock_alloc_base(u64 size, u64 align, u64 max_addr)
 
 	size = memblock_align_up(size, align);
 
-	/* On some platforms, make sure we allocate lowmem */
-	/* Note that MEMBLOCK_REAL_LIMIT may be MEMBLOCK_ALLOC_ANYWHERE */
-	if (max_addr == MEMBLOCK_ALLOC_ANYWHERE)
-		max_addr = MEMBLOCK_REAL_LIMIT;
+	if (max_addr == MEMBLOCK_ALLOC_ACCESSIBLE)
+		max_addr = memblock.current_limit;
 
 	for (i = memblock.memory.cnt - 1; i >= 0; i--) {
 		u64 memblockbase = memblock.memory.region[i].base;
@@ -436,6 +432,11 @@ u64 __init __memblock_alloc_base(u64 size, u64 align, u64 max_addr)
 u64 __init memblock_phys_mem_size(void)
 {
 	return memblock.memory.size;
+}
+
+void __init memblock_set_current_limit(u64 limit)
+{
+       memblock.current_limit = limit;
 }
 
 u64 memblock_end_of_DRAM(void)
