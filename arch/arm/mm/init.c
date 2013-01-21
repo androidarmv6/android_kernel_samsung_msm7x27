@@ -399,7 +399,7 @@ static void map_reserved_memory(void)
 }
 #endif
 
-void __init bootmem_init(void)
+void __init bootmem_init(struct machine_desc *mdesc)
 {
 	struct meminfo *mi = &meminfo;
 	unsigned long min, max_low, max_high;

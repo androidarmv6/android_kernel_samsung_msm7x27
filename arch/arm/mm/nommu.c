@@ -49,7 +49,7 @@ void __init reserve_node_zero(pg_data_t *pgdat)
  */
 void __init paging_init(struct machine_desc *mdesc)
 {
-	bootmem_init();
+	bootmem_init(mdesc);
 }
 
 /*
