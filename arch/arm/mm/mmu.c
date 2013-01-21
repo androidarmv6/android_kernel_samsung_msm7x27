@@ -15,9 +15,9 @@
 #include <linux/mman.h>
 #include <linux/nodemask.h>
 #include <linux/sort.h>
+#include <linux/memblock.h>
 
 #include <asm/cputype.h>
-#include <asm/mach-types.h>
 #include <asm/sections.h>
 #include <asm/cachetype.h>
 #include <asm/setup.h>
@@ -710,6 +710,8 @@ static void __init sanity_check_meminfo(void)
 {
 	int i, j, highmem = 0;
 
+	memblock_set_current_limit(__pa(VMALLOC_MIN - 1) + 1);
+
 	for (i = 0, j = 0; i < meminfo.nr_banks; i++) {
 		struct membank *bank = &meminfo.bank[j];
 		*bank = meminfo.bank[i];
@@ -835,9 +837,9 @@ static inline void prepare_page_table(void)
 }
 
 /*
- * Reserve the various regions of node 0
+ * Reserve the various regions
  */
-void __init reserve_node_zero(pg_data_t *pgdat)
+void __init reserve_special_regions(void)
 {
 	unsigned long res_size = 0;
 
@@ -846,79 +848,17 @@ void __init reserve_node_zero(pg_data_t *pgdat)
 	 * Note that this can only be in node 0.
 	 */
 #ifdef CONFIG_XIP_KERNEL
-	reserve_bootmem_node(pgdat, __pa(_data), _end - _data,
-			BOOTMEM_DEFAULT);
+	reserve_bootmem(__pa(_data), _end - _data, BOOTMEM_DEFAULT);
 #else
-	reserve_bootmem_node(pgdat, __pa(_stext), _end - _stext,
-			BOOTMEM_DEFAULT);
+	reserve_bootmem(__pa(_stext), _end - _stext, BOOTMEM_DEFAULT);
 #endif
 
 	/*
 	 * Reserve the page tables.  These are already in use,
 	 * and can only be in node 0.
 	 */
-	reserve_bootmem_node(pgdat, __pa(swapper_pg_dir),
-			     PTRS_PER_PGD * sizeof(pgd_t), BOOTMEM_DEFAULT);
-
-	/*
-	 * Hmm... This should go elsewhere, but we really really need to
-	 * stop things allocating the low memory; ideally we need a better
-	 * implementation of GFP_DMA which does not assume that DMA-able
-	 * memory starts at zero.
-	 */
-	if (machine_is_integrator() || machine_is_cintegrator())
-		res_size = __pa(swapper_pg_dir) - PHYS_OFFSET;
-
-	/*
-	 * These should likewise go elsewhere.  They pre-reserve the
-	 * screen memory region at the start of main system memory.
-	 */
-	if (machine_is_edb7211())
-		res_size = 0x00020000;
-	if (machine_is_p720t())
-		res_size = 0x00014000;
-
-	/* H1940, RX3715 and RX1950 need to reserve this for suspend */
-
-	if (machine_is_h1940() || machine_is_rx3715()
-		|| machine_is_rx1950()) {
-		reserve_bootmem_node(pgdat, 0x30003000, 0x1000,
-				BOOTMEM_DEFAULT);
-		reserve_bootmem_node(pgdat, 0x30081000, 0x1000,
-				BOOTMEM_DEFAULT);
-	}
-
-	if (machine_is_palmld() || machine_is_palmtx()) {
-		reserve_bootmem_node(pgdat, 0xa0000000, 0x1000,
-				BOOTMEM_EXCLUSIVE);
-		reserve_bootmem_node(pgdat, 0xa0200000, 0x1000,
-				BOOTMEM_EXCLUSIVE);
-	}
-
-	if (machine_is_treo680() || machine_is_centro()) {
-		reserve_bootmem_node(pgdat, 0xa0000000, 0x1000,
-				BOOTMEM_EXCLUSIVE);
-		reserve_bootmem_node(pgdat, 0xa2000000, 0x1000,
-				BOOTMEM_EXCLUSIVE);
-	}
-
-	if (machine_is_palmt5())
-		reserve_bootmem_node(pgdat, 0xa0200000, 0x1000,
-				BOOTMEM_EXCLUSIVE);
-
-	/*
-	 * U300 - This platform family can share physical memory
-	 * between two ARM cpus, one running Linux and the other
-	 * running another OS.
-	 */
-	if (machine_is_u300()) {
-#ifdef CONFIG_MACH_U300_SINGLE_RAM
-#if ((CONFIG_MACH_U300_ACCESS_MEM_SIZE & 1) == 1) &&	\
-	CONFIG_MACH_U300_2MB_ALIGNMENT_FIX
-		res_size = 0x00100000;
-#endif
-#endif
-	}
+	reserve_bootmem(__pa(swapper_pg_dir),
+		PTRS_PER_PGD * sizeof(pgd_t), BOOTMEM_DEFAULT);
 
 #ifdef CONFIG_SA1111
 	/*
@@ -934,8 +874,7 @@ void __init reserve_node_zero(pg_data_t *pgdat)
 #endif
 
 	if (res_size)
-		reserve_bootmem_node(pgdat, PHYS_OFFSET, res_size,
-				BOOTMEM_DEFAULT);
+		reserve_bootmem(PHYS_OFFSET, res_size, BOOTMEM_DEFAULT);
 }
 
 /*
@@ -1080,7 +1019,7 @@ void __init paging_init(struct machine_desc *mdesc)
 	sanity_check_meminfo();
 	prepare_page_table();
 	map_lowmem();
-	bootmem_init();
+	bootmem_init(mdesc);
 	devicemaps_init(mdesc);
 	kmap_init();
 
