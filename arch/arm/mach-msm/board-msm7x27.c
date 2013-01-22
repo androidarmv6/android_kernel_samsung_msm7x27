@@ -2654,7 +2654,7 @@ static void __init msm_msm7x2x_allocate_memory_regions(void) {
 
 	size = pmem_mdp_size;
 	if (size) {
-		addr = alloc_bootmem(size);
+		addr = alloc_bootmem_align(size, 0x1000);
 		android_pmem_pdata.start = __pa(addr);
 		android_pmem_pdata.size = size;
 		pr_info("allocating %lu bytes at %p (%lx physical) for mdp "
@@ -2687,12 +2687,15 @@ static void __init msm_msm7x2x_allocate_memory_regions(void) {
 	}
 }
 
+static void __init msm7x27_init_early(void) {
+	msm_msm7x2x_allocate_memory_regions();
+}
+
 static void __init msm7x2x_map_io(void) {
 #ifdef CONFIG_MACH_EUROPA
         msm_shared_ram_phys = 0x00100000;
 #endif
 	msm_map_common_io();
-	msm_msm7x2x_allocate_memory_regions();
 
 	if (socinfo_init() < 0)
 		BUG();
@@ -2745,6 +2748,7 @@ MACHINE_START(MSM7X27_SUFT, "QCT MSM7X27 SURF")
 	.init_irq       = msm7x2x_init_irq,
 	.init_machine   = msm7x2x_init,
 	.timer          = &msm_timer,
+	.init_early     = msm7x27_init_early,
 MACHINE_END
 
 MACHINE_START(MSM7X27_FFA, "QCT MSM7x27 FFA")
@@ -2757,5 +2761,6 @@ MACHINE_START(MSM7X27_FFA, "QCT MSM7x27 FFA")
 	.init_irq	= msm7x2x_init_irq,
 	.init_machine	= msm7x2x_init,
 	.timer		= &msm_timer,
+	.init_early     = msm7x27_init_early,
 MACHINE_END
 
