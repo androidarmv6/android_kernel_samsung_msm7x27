@@ -1393,7 +1393,7 @@ static struct platform_device msm_camera_sensor_isx006 = {
 };
 #endif
 
-#ifdef CONFIG_S5K5CAGX_GIO //PGH
+#ifdef CONFIG_S5K5CAGX_GIO
 static struct msm_camera_sensor_flash_data flash_s5k5cagx = {
         .flash_type = MSM_CAMERA_FLASH_LED,
         .flash_src  = &msm_flash_src
@@ -1767,6 +1767,9 @@ static struct platform_device *devices[] __initdata = {
 #endif
 #ifdef CONFIG_S5K5CCAF_GIO
 	&msm_camera_sensor_s5k5ccaf,
+#endif
+#ifdef CONFIG_S5K5CAGX_GIO
+	&msm_camera_sensor_s5k5cagx,
 #endif
 #if defined(CONFIG_S5K4ECGX_COOPER) || defined(CONFIG_S5K4ECGX)
 	&msm_camera_sensor_s5k4ecgx,
