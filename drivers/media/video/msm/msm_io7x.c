@@ -1,7 +1,3 @@
-#if defined(CONFIG_MACH_GIO)
-#include "msm_io7x_gio.c"
-#else
-
 /* Copyright (c) 2009, Code Aurora Forum. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -27,6 +23,10 @@
 #include <mach/board.h>
 #include <mach/camera.h>
 #include <mach/clk.h>
+
+#ifdef CONFIG_MACH_GIO
+#include "s5k5cagx_rough.h"
+#endif
 
 #define CAMIF_CFG_RMSK 0x1fffff
 #define CAM_SEL_BMSK 0x2
@@ -195,10 +195,26 @@ int msm_camio_sensor_clk_off(struct platform_device *pdev)
 
 void msm_camio_disable(struct platform_device *pdev)
 {
+#ifdef CONFIG_MACH_GIO
+	struct msm_camera_sensor_info *sinfo = pdev->dev.platform_data;
+	struct msm_camera_device_platform_data *camdev = sinfo->pdata;
+#endif
 	iounmap(appbase);
 	release_mem_region(camio_ext.appphy, camio_ext.appsz);
+#ifdef CONFIG_MACH_GIO
+	gpio_set_value(0, 0);//RESET
+
+	camdev->camera_gpio_off();
+
+	printk("<=PCAM=> test code clk~~~~~~~~~\n");
+	msm_camio_clk_sel(MSM_CAMIO_CLK_SRC_INTERNAL);
+#endif
 	msm_camio_clk_disable(CAMIO_VFE_CLK);
 	msm_camio_clk_disable(CAMIO_MDC_CLK);
+#ifdef CONFIG_MACH_GIO
+        udelay(30);
+	cam_pw(0);
+#endif
 }
 
 void msm_disable_io_gpio_clk(struct platform_device *pdev)
@@ -325,7 +341,3 @@ int msm_camio_probe_off(struct platform_device *pdev)
 	camdev->camera_gpio_off();
 	return msm_camio_clk_disable(CAMIO_VFE_CLK);
 }
-
-
-#endif
-
