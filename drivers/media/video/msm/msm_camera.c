@@ -1,6 +1,3 @@
-#if defined(CONFIG_MACH_GIO)
-#include "msm_camera_gio.c"
-#else
 
 /* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
  *
@@ -44,23 +41,22 @@
 #include <linux/syscalls.h>
 #include <linux/hrtimer.h>
 
-#if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT)
+#if defined(CONFIG_S5K5CAFF)
 #include "s5k5caff_rough.h"
-#elif defined(CONFIG_MACH_COOPER)
-void sensor_ext_config(void __user *arg);
-#elif defined(CONFIG_MACH_GIO)
-void sensor_rough_control(void __user *arg);
-#elif defined(CONFIG_MACH_BENI)
+#elif defined(CONFIG_S5K4ECGX_COOPER)
+#include "s5k4ecgx_rough_cooper.h"
+#elif defined(CONFIG_S5K5CAGX_GIO)
+#include "s5k5cagx_rough_gio.h"
+#elif defined(CONFIG_S5K4ECGX)
 #include "s5k4ecgx_rough.h"
-#elif defined(CONFIG_MACH_LUCAS)
+#elif defined(CONFIG_S5K5CCAF)
 #include "s5k5ccaf_rough.h"
-#elif defined(CONFIG_MACH_CALLISTO)
+#elif defined(CONFIG_S5K5CA)
 #include "s5k5ca_rough.h"
-#elif defined(CONFIG_MACH_EUROPA)
+#elif defined(CONFIG_SR200PC10)
 #include "sr200pc10_rough.h"
 #endif
 
-#define	pr_info	printk
 #define CAMERA_STOP_SNAPSHOT 42
 
 DEFINE_MUTEX(ctrl_cmd_lock);
@@ -924,8 +920,9 @@ static int msm_control(struct msm_control_device *ctrl_pmsm,
 	udata->value = data;
 
 #if defined (CONFIG_MACH_COOPER) || defined (CONFIG_MACH_GIO)
-	if (udata->type == CAMERA_STOP_SNAPSHOT)sync->get_pic_abort = 1;
+	if (udata->type == CAMERA_STOP_SNAPSHOT) sync->get_pic_abort = 1;
 #endif
+	atomic_set(&qcmd->on_heap, 0);
 	qcmd->type = MSM_CAM_Q_CTRL;
 	qcmd->command = udata;
 
@@ -952,10 +949,10 @@ static int msm_control(struct msm_control_device *ctrl_pmsm,
 
 	qcmd_resp = __msm_control(sync,
 				  &ctrl_pmsm->ctrl_q,
-				  qcmd, msecs_to_jiffies(10000));
+				  qcmd, msecs_to_jiffies(10000)); // 10 ms
 
 	/* ownership of qcmd will be transfered to event queue */
-	qcmd = NULL;
+//	qcmd = NULL;
 
 	if (!qcmd_resp || IS_ERR(qcmd_resp)) {
 		/* Do not free qcmd_resp here.  If the config thread read it,
@@ -2007,7 +2004,11 @@ static int msm_set_crop(struct msm_sync *sync, void __user *arg)
 			mutex_unlock(&sync->lock);
 			return -ENOMEM;
 		}
+	} else {
+		if (sync->croplen < crop.len)
+			return -EINVAL;
 	}
+
 
 	if (copy_from_user(sync->cropinfo,
 				crop.info,
@@ -2423,17 +2424,10 @@ static long msm_ioctl_control(struct file *filep, unsigned int cmd,
 	case MSM_CAM_IOCTL_GET_CAMERA_INFO:
 		rc = msm_get_camera_info(argp);
 		break;
-#if defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_BENI) || defined (CONFIG_MACH_GIO) || defined(CONFIG_MACH_LUCAS) || defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_EUROPA)
-    case MSM_CAM_IOCTL_PCAM_CTRL_8BIT:
-        sensor_rough_control(argp);
-        rc = 0;
-        break;
-#elif defined(CONFIG_MACH_COOPER) 
-    case MSM_CAM_IOCTL_PCAM_CTRL_8BIT:
-        sensor_ext_config(argp);
-        rc = 0;
-        break;
-#endif
+	case MSM_CAM_IOCTL_PCAM_CTRL_8BIT:
+		sensor_rough_control(argp);
+		rc = 0;
+		break;
 	default:
 		rc = msm_ioctl_common(pmsm, cmd, argp);
 		break;
@@ -2970,7 +2964,6 @@ static int __msm_open(struct msm_sync *sync, const char *const apps_id,
 
 	if (!sync->core_powered_on && !is_controlnode) {
 		wake_lock(&sync->wake_lock);
-
 		msm_camvfe_fn_init(&sync->vfefn, sync);
 		if (sync->vfefn.vfe_init) {
 			sync->pp_frame_avail = 0;
@@ -3373,8 +3366,3 @@ int msm_camera_drv_start(struct platform_device *dev,
 	return rc;
 }
 EXPORT_SYMBOL(msm_camera_drv_start);
-
-
-
-#endif
-

@@ -1533,7 +1533,7 @@ void s5k4ecgx_set_capture(void)
 	}
 }
 
-void sensor_ext_config(void __user *arg)
+void sensor_rough_control(void __user *arg)
 {
 	ioctl_pcam_info_8bit	ctrl_info;
 
