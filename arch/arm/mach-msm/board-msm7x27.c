@@ -1,6 +1,7 @@
 #if defined(CONFIG_MACH_BENI)
 #include "board-beni.c"
 #elif defined(CONFIG_MACH_TASS)
+#include "board-tass.c"
 #else
 /*
  * Copyright (C) 2007 Google, Inc.
