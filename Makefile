@@ -1,8 +1,8 @@
 VERSION = 2
 PATCHLEVEL = 6
-SUBLEVEL = 37
-EXTRAVERSION = .6
-NAME = Flesh-Eating Bats with Fangs
+SUBLEVEL = 35
+EXTRAVERSION = .7
+NAME = Yokohama
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
