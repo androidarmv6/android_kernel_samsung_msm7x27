@@ -55,7 +55,6 @@ static int is_vibe_on = 0;
 static int msm_vibrator_suspend(struct platform_device *pdev, pm_message_t state);
 static int msm_vibrator_resume(struct platform_device *pdev);
 static int msm_vibrator_probe(struct platform_device *pdev);
-static int msm_vibrator_exit(struct platform_device *pdev);
 static int msm_vibrator_power(int power_mode);
 
 
@@ -68,13 +67,19 @@ VibeInt32 g_nForce_32 = 0;
  * 
  */
 
+static int __devexit msm_vibrator_exit(struct platform_device *pdev)
+{
+		printk("[VIB] EXIT\n");
+		return 0;
+}
+
 /* for the suspend/resume VIBRATOR Module */
 static struct platform_driver msm_vibrator_platdrv = 
 {
 	.probe   = msm_vibrator_probe,
 	.suspend = msm_vibrator_suspend,
 	.resume  = msm_vibrator_resume,
-	.remove  = __devexit_p(msm_vibrator_exit),
+	.remove  = msm_vibrator_exit,
 	.driver = 
 	{
 			.name = MODULE_NAME,
@@ -121,11 +126,7 @@ static int msm_vibrator_resume(struct platform_device *pdev)
 	return VIBE_S_SUCCESS;
 }
 
-static int __devexit msm_vibrator_exit(struct platform_device *pdev)
-{
-		printk("[VIB] EXIT\n");
-		return 0;
-}
+
 
 static int msm_vibrator_power(int on)
 {
