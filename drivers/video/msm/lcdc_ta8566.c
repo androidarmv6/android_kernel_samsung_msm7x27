@@ -760,7 +760,7 @@ static void lcd_det_work_func(struct work_struct *work)
 
 #endif
 
-static int __init ta8566_probe(struct platform_device *pdev)
+static int __devinit ta8566_probe(struct platform_device *pdev)
 {
 	int ret;
 	

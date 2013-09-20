@@ -583,7 +583,7 @@ static DEVICE_ATTR(lcd_power, 0666,						//sm.kim: give write permission for app
                         s3cfb_sysfs_store_lcd_power);
 #endif
 
-static int __init s6d04d1_probe(struct platform_device *pdev)
+static int __devinit s6d04d1_probe(struct platform_device *pdev)
 {
 	int ret;
 	DPRINT("start %s\n", __func__);	
