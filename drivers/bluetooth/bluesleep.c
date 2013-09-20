@@ -66,7 +66,7 @@
 
 #define BT_POWER_ENABLE_SLEEP
 #define WAKE_GPIO_ACTIVE_HIGH
-#define BTLD_CONTROL_WAKE_GPIO
+#undef BTLD_CONTROL_WAKE_GPIO
 
 struct bluesleep_info {
 	unsigned host_wake;
