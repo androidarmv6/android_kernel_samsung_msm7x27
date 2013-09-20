@@ -748,7 +748,7 @@ static DEVICE_ATTR(lcd_power, 0660,						//sm.kim: give write permission for app
 #endif
 
 
-static int __init s6d05a0_probe(struct platform_device *pdev)
+static int __devinit s6d05a0_probe(struct platform_device *pdev)
 {
 
 	int ret = 0;

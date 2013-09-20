@@ -861,7 +861,7 @@ static DEVICE_ATTR(lcd_power, 0660,						//sm.kim: give write permission for app
                         s6d16a0x_store_lcd_power);
 #endif
 
-static int __init s6d16a0x_probe(struct platform_device *pdev)
+static int __devinit s6d16a0x_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	unsigned char data[4] = {0, };

@@ -922,7 +922,7 @@ static DEVICE_ATTR(lcd_power_clock, 0666,						//sm.kim: give write permission f
 #endif
 
 
-static int __init s6d04m0_probe(struct platform_device *pdev)
+static int __devinit s6d04m0_probe(struct platform_device *pdev)
 {
 	int ret;
 	DPRINT("start %s\n", __func__);	

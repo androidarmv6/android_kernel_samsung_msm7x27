@@ -844,7 +844,7 @@ static void lcd_det_work_func(struct work_struct *work)
 
 #endif
 
-static int __init s6d04h0a_probe(struct platform_device *pdev)
+static int __devinit s6d04h0a_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	printk("++++++pdev->id=%d\n", pdev->id);
