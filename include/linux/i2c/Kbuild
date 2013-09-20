@@ -1,0 +1,4 @@
+header-y += bma222.h
+header-y += mmc31xx.h
+header-y += mecs.h
+
