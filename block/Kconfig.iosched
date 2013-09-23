@@ -1,5 +1,4 @@
 if BLOCK
-
 menu "IO Schedulers"
 
 config IOSCHED_NOOP
@@ -11,6 +10,17 @@ config IOSCHED_NOOP
 	  memory devices, and specialised software or hardware environments
 	  that do their own scheduling and require only minimal assistance from
 	  the kernel.
+
+config IOSCHED_ROW
+	tristate "ROW I/O scheduler"
+	default y
+	---help---
+	  The ROW I/O scheduler gives priority to READ requests over the
+	  WRITE requests when dispatching, without starving WRITE requests.
+	  Requests are kept in priority queues. Dispatching is done in a RR
+	  manner when the dispatch quantum for each queue is calculated
+	  according to queue priority.
+	  Most suitable for mobile devices.
 
 config IOSCHED_DEADLINE
 	tristate "Deadline I/O scheduler"
@@ -60,9 +70,7 @@ config IOSCHED_CFQ
 	  among all processes in the system. It should provide a fair
 	  and low latency working environment, suitable for both desktop
 	  and server systems.
-
 	  This is the default I/O scheduler.
-
 	  Note: If BLK_CGROUP=m, then CFQ can be built only as module.
 
 config CFQ_GROUP_IOSCHED
@@ -82,7 +90,20 @@ config IOSCHED_SIO
 	basic merging, trying to keep a minimum overhead. It is aimed
 	mainly for aleatory access devices (eg: flash devices).
 
+config IOSCHED_SIOPLUS
+	tristate "SIO I/O scheduler"
+	default y
+	---help---
+	  The Simple I/O scheduler is an extremely simple scheduler,
+	  based on NOOP, that relies on deadlines to
+	  ensure fairness. The algorithm does not do any sorting but
+	  basic merging, trying to keep a minimum overhead. It is aimed
+	  mainly for aleatory access devices (eg: flash devices).
 
+config IOSCHED_ZEN
+	tristate "ZEN I/O scheduler"
+	default y
+	
 choice
 	prompt "Default I/O scheduler"
 	default DEFAULT_CFQ
@@ -105,8 +126,17 @@ choice
 	config DEFAULT_SIO
 		bool "SIO" if IOSCHED_SIO=y
 
+	config DEFAULT_SIOPLUS
+		bool "SIOPLUS" if IOSCHED_SIOPLUS=y
+
 	config DEFAULT_NOOP
 		bool "No-op"
+		
+	config DEFAULT_ROW
+		bool "ROW" if IOSCHED_ROW=y
+
+	config DEFAULT_ZEN
+		bool "ZEN" if IOSCHED_ZEN=y
 
 endchoice
 
@@ -116,9 +146,11 @@ config DEFAULT_IOSCHED
 	default "cfq" if DEFAULT_CFQ
 	default "bfq" if DEFAULT_BFQ
 	default "sio" if DEFAULT_SIO
+	default "sioplus" if DEFAULT_SIOPLUS
 	default "noop" if DEFAULT_NOOP
 	default "vr" if DEFAULT_VR
+	default "row" if DEFAULT_ROW
+	default "zen" if DEFAULT_ZEN
 
 endmenu
-
 endif
