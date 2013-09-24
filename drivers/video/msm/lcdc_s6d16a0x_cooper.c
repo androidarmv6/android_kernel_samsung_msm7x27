@@ -784,7 +784,7 @@ static void lcdc_s6d16a0x_set_backlight(struct msm_fb_data_type *mfd)
 {
 	int bl_value = mfd->bl_level;
 	static int lockup_count = 0;
-	printk("[BACLKIGHT] : %d\n",bl_value);
+	printk("[BACKLIGHT] : %d\n",bl_value);
 
 	if(board_hw_revision >= 0x4) {
 		lcdc_s6d_set_brightness_by_ktd259(bl_value);
@@ -861,7 +861,7 @@ static DEVICE_ATTR(lcd_power, 0660,						//sm.kim: give write permission for app
                         s6d16a0x_store_lcd_power);
 #endif
 
-static int __devinit s6d16a0x_probe(struct platform_device *pdev)
+static int __init s6d16a0x_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	unsigned char data[4] = {0, };
