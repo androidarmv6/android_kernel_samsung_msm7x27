@@ -689,7 +689,7 @@ static void lcdc_s6d04h0a_set_backlight(struct msm_fb_data_type *mfd)
 {	
 	int bl_value = mfd->bl_level;
 	static int lockup_count = 0;
-	printk("[BACLKIGHT] : %d\n",bl_value);
+	printk("[BACKLIGHT] : %d\n",bl_value);
 	if(board_hw_revision == 1 || board_hw_revision == 0) {
 		lcdc_s6d_set_brightness_by_aat1401(bl_value);
 	} else if(board_hw_revision == 2 || board_hw_revision == 3) {
@@ -844,7 +844,7 @@ static void lcd_det_work_func(struct work_struct *work)
 
 #endif
 
-static int __devinit s6d04h0a_probe(struct platform_device *pdev)
+static int __init s6d04h0a_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	printk("++++++pdev->id=%d\n", pdev->id);
