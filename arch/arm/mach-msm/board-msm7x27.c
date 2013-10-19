@@ -2321,6 +2321,9 @@ static struct mmc_platform_data msm7x2x_sdc2_data = {
 	.register_status_notify	= register_wlan_status_notify,
 #endif
 	.dummy52_required = 1,
+#ifdef CONFIG_MMC_MSM_SDIO_SUPPORT
+	.sdiowakeup_irq = MSM_GPIO_TO_INT(66),
+#endif
 	.msmsdcc_fmin   = 144000,
 	.msmsdcc_fmid   = 24576000,
 	.msmsdcc_fmax   = 49152000,
