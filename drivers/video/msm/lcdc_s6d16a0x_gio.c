@@ -666,7 +666,7 @@ static void lcdc_s6d16a0x_set_backlight(struct msm_fb_data_type *mfd)
 {
 	int bl_value = mfd->bl_level;
 
-	printk("[BACLKIGHT] : %d\n",bl_value);
+	printk("[BACKLIGHT] : %d\n",bl_value);
 
 	if(board_hw_revision == 7) {
 		lcdc_s6d_set_brightness_by_aat1401(bl_value);

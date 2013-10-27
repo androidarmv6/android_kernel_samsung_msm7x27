@@ -735,7 +735,7 @@ static void lcd_det_work_func(struct work_struct *work)
 
 #endif
 
-static int __init s6d16a0x_probe(struct platform_device *pdev)
+static int __devinit s6d16a0x_probe(struct platform_device *pdev)
 {
 	int ret;
 	
