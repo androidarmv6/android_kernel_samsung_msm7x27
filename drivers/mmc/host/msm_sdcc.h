@@ -168,8 +168,7 @@
 
 #define NR_SG		32
 
-#define MSM_MMC_IDLE_TIMEOUT	10000 /* msec */
-
+#define MSM_MMC_IDLE_TIMEOUT	10000 /* msecs */
 
 /*
  * Set the request timeout to 10secs to allow
@@ -268,8 +267,10 @@ struct msmsdcc_host {
 	u32					cmd_c;
 
 	unsigned int	mci_irqenable;
+
 	unsigned int	dummy_52_needed;
-	unsigned int	dummy_52_state;
+	unsigned int	dummy_52_sent;
+
 	unsigned int	sdio_irq_disabled;
 	struct wake_lock	sdio_wlock;
 	struct wake_lock	sdio_suspend_wlock;
@@ -277,8 +278,24 @@ struct msmsdcc_host {
 
 	unsigned int sdcc_irq_disabled;
 	struct timer_list req_tout_timer;
+	bool sdio_gpio_lpm;
+	bool irq_wake_enabled;
 };
 
 int msmsdcc_set_pwrsave(struct mmc_host *mmc, int pwrsave);
+int msmsdcc_sdio_al_lpm(struct mmc_host *mmc, bool enable);
+
+#ifdef CONFIG_MSM_SDIO_AL
+
+static inline int msmsdcc_lpm_enable(struct mmc_host *mmc)
+{
+	return msmsdcc_sdio_al_lpm(mmc, true);
+}
+
+static inline int msmsdcc_lpm_disable(struct mmc_host *mmc)
+{
+	return msmsdcc_sdio_al_lpm(mmc, false);
+}
+#endif
 
 #endif

@@ -272,14 +272,6 @@ static int mmc_blk_issue_rq(struct mmc_queue *mq, struct request *req)
 	struct mmc_blk_request brq;
 	int ret = 1, disable_multi = 0;
 
-#if 1	//defined(CONFIG_MACH_LUCAS)	
-	int single_retry = 2;
-	int multi_retry = 2;
-#else
-	int single_retry = 5;
-	int multi_retry = 5;
-#endif
-
 #ifdef CONFIG_MMC_BLOCK_DEFERRED_RESUME
 	if (mmc_bus_needs_resume(card->host)) {
 		mmc_resume_bus(card->host);
@@ -383,11 +375,6 @@ static int mmc_blk_issue_rq(struct mmc_queue *mq, struct request *req)
 		 */
 		if (brq.cmd.error || brq.data.error || brq.stop.error) {
 			if (brq.data.blocks > 1 && rq_data_dir(req) == READ) {
-				if(multi_retry > 0)
-				{
-					--multi_retry;
-					continue;
-				}
 				/* Redo read one sector at a time */
 				printk(KERN_WARNING "%s: retrying using single "
 				       "block read\n", req->rq_disk->disk_name);
@@ -395,20 +382,10 @@ static int mmc_blk_issue_rq(struct mmc_queue *mq, struct request *req)
 				continue;
 			}
 			status = get_card_status(card, req);
-		if((brq.cmd.error || brq.data.error) && brq.data.blocks <= 1 && single_retry>0)
-		{
-			--single_retry;
-			continue;
-		}
 		} else if (disable_multi == 1) {
 			disable_multi = 0;
 		}
 
-		if( brq.data.blocks <= 1)
-		{
-			multi_retry=5;
-			single_retry=5;
-		}
 		if (brq.cmd.error) {
 			printk(KERN_ERR "%s: error %d sending read/write "
 			       "command, response %#x, card status %#x\n",
