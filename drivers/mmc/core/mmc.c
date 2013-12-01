@@ -239,7 +239,6 @@ static int mmc_read_ext_csd(struct mmc_card *card)
 			/* size is in 256K chunks, i.e. 512 sectors each */
 			boot_sectors = ext_csd[EXT_CSD_BOOT_SIZE_MULTI] * 512;
 			card->ext_csd.sectors -= boot_sectors;
-			mmc_card_set_blockaddr(card);
 		}
 	}
 
@@ -471,12 +470,11 @@ static int mmc_init_card(struct mmc_host *host, u32 ocr,
 	    (host->caps & (MMC_CAP_4_BIT_DATA | MMC_CAP_8_BIT_DATA))) {
 		unsigned ext_csd_bit, bus_width;
 
-		if ((host->caps & MMC_CAP_8_BIT_DATA) &&
-				!(mmc_bustest(host, card, MMC_BUS_WIDTH_8))) {
+		if (host->caps & MMC_CAP_8_BIT_DATA) {
 			pr_debug("Setting the bus width to 8 bit\n");
 			ext_csd_bit = EXT_CSD_BUS_WIDTH_8;
 			bus_width = MMC_BUS_WIDTH_8;
-		} else if (!(mmc_bustest(host, card, MMC_BUS_WIDTH_4))) {
+		} else if (host->caps & MMC_CAP_4_BIT_DATA) {
 			pr_debug("Setting the bus width to 4 bit\n");
 			ext_csd_bit = EXT_CSD_BUS_WIDTH_4;
 			bus_width = MMC_BUS_WIDTH_4;
@@ -653,7 +651,7 @@ static void mmc_attach_bus_ops(struct mmc_host *host)
 {
 	const struct mmc_bus_ops *bus_ops;
 
-	if (host->caps & MMC_CAP_NONREMOVABLE || !mmc_assume_removable)
+	if (!mmc_card_is_removable(host))
 		bus_ops = &mmc_ops_unsafe;
 	else
 		bus_ops = &mmc_ops;
