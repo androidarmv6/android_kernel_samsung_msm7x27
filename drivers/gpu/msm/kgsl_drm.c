@@ -1,4 +1,4 @@
-/* Copyright (c) 2009-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2009-2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -295,8 +295,9 @@ kgsl_gem_alloc_memory(struct drm_gem_object *obj)
 		priv->memdesc.size = obj->size * priv->bufcount;
 
 	} else if (TYPE_IS_MEM(priv->type)) {
-		priv->memdesc.hostptr =
-			vmalloc_user(obj->size * priv->bufcount);
+		result = kgsl_sharedmem_page_alloc(&priv->memdesc,
+					priv->pagetable,
+					obj->size * priv->bufcount, 0);
 
 		if (priv->memdesc.hostptr == NULL) {
 			DRM_ERROR("Unable to allocate vmalloc memory\n");
@@ -315,7 +316,6 @@ kgsl_gem_alloc_memory(struct drm_gem_object *obj)
 	return 0;
 }
 
-#ifdef CONFIG_MSM_KGSL_MMU
 static void
 kgsl_gem_unmap(struct drm_gem_object *obj)
 {
@@ -335,12 +335,6 @@ kgsl_gem_unmap(struct drm_gem_object *obj)
 
 	priv->flags &= ~DRM_KGSL_GEM_FLAG_MAPPED;
 }
-#else
-static void
-kgsl_gem_unmap(struct drm_gem_object *obj)
-{
-}
-#endif
 
 static void
 kgsl_gem_free_memory(struct drm_gem_object *obj)
@@ -724,7 +718,6 @@ kgsl_gem_unbind_gpu_ioctl(struct drm_device *dev, void *data,
 	return 0;
 }
 
-#ifdef CONFIG_MSM_KGSL_MMU
 static int
 kgsl_gem_map(struct drm_gem_object *obj)
 {
@@ -769,24 +762,6 @@ kgsl_gem_map(struct drm_gem_object *obj)
 
 	return ret;
 }
-#else
-static int
-kgsl_gem_map(struct drm_gem_object *obj)
-{
-	struct drm_kgsl_gem_object *priv = obj->driver_private;
-	int index;
-
-	if (TYPE_IS_PMEM(priv->type)) {
-		for (index = 0; index < priv->bufcount; index++)
-			priv->bufs[index].gpuaddr =
-			priv->memdesc.physaddr + priv->bufs[index].offset;
-
-		return 0;
-	}
-
-	return -EINVAL;
-}
-#endif
 
 int
 kgsl_gem_bind_gpu_ioctl(struct drm_device *dev, void *data,
@@ -1068,17 +1043,18 @@ int kgsl_gem_kmem_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	struct drm_gem_object *obj = vma->vm_private_data;
 	struct drm_device *dev = obj->dev;
 	struct drm_kgsl_gem_object *priv;
-	unsigned long offset, pg;
+	unsigned long offset;
 	struct page *page;
+	int i;
 
 	mutex_lock(&dev->struct_mutex);
 
 	priv = obj->driver_private;
 
 	offset = (unsigned long) vmf->virtual_address - vma->vm_start;
-	pg = (unsigned long) priv->memdesc.hostptr + offset;
+	i = offset >> PAGE_SHIFT;
+	page = sg_page(&(priv->memdesc.sg[i]));
 
-	page = vmalloc_to_page((void *) pg);
 	if (!page) {
 		mutex_unlock(&dev->struct_mutex);
 		return VM_FAULT_SIGBUS;
@@ -1687,4 +1663,3 @@ void kgsl_drm_exit(void)
 {
 	drm_exit(&driver);
 }
-

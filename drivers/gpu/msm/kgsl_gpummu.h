@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -83,4 +83,3 @@ static inline unsigned int kgsl_pt_get_base_addr(struct kgsl_pagetable *pt)
 	return gpummu_pt->base.gpuaddr;
 }
 #endif /* __KGSL_GPUMMU_H */
-

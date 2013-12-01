@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2002,2007-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -139,27 +139,19 @@ int adreno_drawctxt_create(struct kgsl_device *device,
 	drawctxt->pagetable = pagetable;
 	drawctxt->bin_base_offset = 0;
 
-	/* FIXME: Deal with preambles */
+	if (flags & KGSL_CONTEXT_PREAMBLE)
+		drawctxt->flags |= CTXT_FLAGS_PREAMBLE;
 
-	ret = adreno_dev->gpudev->ctxt_gpustate_shadow(adreno_dev, drawctxt);
+	if (flags & KGSL_CONTEXT_NO_GMEM_ALLOC)
+		drawctxt->flags |= CTXT_FLAGS_NOGMEMALLOC;
+
+	ret = adreno_dev->gpudev->ctxt_create(adreno_dev, drawctxt);
 	if (ret)
 		goto err;
-
-	/* Save the shader instruction memory on context switching */
-	drawctxt->flags |= CTXT_FLAGS_SHADER_SAVE;
-
-	if (!(flags & KGSL_CONTEXT_NO_GMEM_ALLOC)) {
-		/* create gmem shadow */
-		ret = adreno_dev->gpudev->ctxt_gmem_shadow(adreno_dev,
-			drawctxt);
-		if (ret != 0)
-			goto err;
-	}
 
 	context->devctxt = drawctxt;
 	return 0;
 err:
-	kgsl_sharedmem_free(&drawctxt->gpustate);
 	kfree(drawctxt);
 	return ret;
 }
@@ -254,8 +246,13 @@ void adreno_drawctxt_switch(struct adreno_device *adreno_dev,
 	}
 
 	/* already current? */
-	if (adreno_dev->drawctxt_active == drawctxt)
+	if (adreno_dev->drawctxt_active == drawctxt) {
+		if (adreno_dev->gpudev->ctxt_draw_workaround &&
+			adreno_is_a225(adreno_dev))
+				adreno_dev->gpudev->ctxt_draw_workaround(
+					adreno_dev);
 		return;
+	}
 
 	KGSL_CTXT_INFO(device, "from %p to %p flags %d\n",
 			adreno_dev->drawctxt_active, drawctxt, flags);
@@ -267,4 +264,3 @@ void adreno_drawctxt_switch(struct adreno_device *adreno_dev,
 	adreno_dev->drawctxt_active = drawctxt;
 	adreno_dev->gpudev->ctxt_restore(adreno_dev, drawctxt);
 }
-
