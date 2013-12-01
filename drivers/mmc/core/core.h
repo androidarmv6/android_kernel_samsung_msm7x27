@@ -56,7 +56,6 @@ int mmc_attach_sdio(struct mmc_host *host, u32 ocr);
 
 /* Module parameters */
 extern int use_spi_crc;
-extern int mmc_assume_removable;
 
 /* Debugfs information for hosts and cards */
 void mmc_add_host_debugfs(struct mmc_host *host);
@@ -65,8 +64,5 @@ void mmc_remove_host_debugfs(struct mmc_host *host);
 void mmc_add_card_debugfs(struct mmc_card *card);
 void mmc_remove_card_debugfs(struct mmc_card *card);
 
-// add by qualcomm
-void mmc_power_up(struct mmc_host *host);
-void mmc_power_off(struct mmc_host *host);
 #endif
 
