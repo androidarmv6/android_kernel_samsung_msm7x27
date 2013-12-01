@@ -34,6 +34,10 @@
 #define DRIVER_VERSION_MAJOR   3
 #define DRIVER_VERSION_MINOR   1
 
+/* XXX: this kernel will never support these SoCs */
+#define cpu_is_msm8930() 0
+#define cpu_is_msm8960() 0
+
 /* Adreno MH arbiter config*/
 #define ADRENO_CFG_MHARB \
 	(0x10 \

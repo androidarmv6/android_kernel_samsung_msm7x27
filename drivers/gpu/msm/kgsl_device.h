@@ -185,7 +185,7 @@ struct kgsl_device {
 	struct wake_lock idle_wakelock;
 	struct kgsl_pwrscale pwrscale;
 	struct kobject pwrscale_kobj;
-	struct pm_qos_request_list pm_qos_req_dma;
+	struct pm_qos_request_list *pm_qos_req_dma;
 	struct work_struct ts_expired_ws;
 	struct list_head events;
 	s64 on_time;

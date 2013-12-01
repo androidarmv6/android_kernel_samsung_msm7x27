@@ -426,7 +426,7 @@ static int kgsl_suspend_device(struct kgsl_device *device, pm_message_t state)
 			device->ftbl->stop(device);
 			if (device->idle_wakelock.name)
 				wake_unlock(&device->idle_wakelock);
-			pm_qos_update_request(&device->pm_qos_req_dma,
+			pm_qos_update_request(device->pm_qos_req_dma,
 						PM_QOS_DEFAULT_VALUE);
 			kgsl_pwrctrl_set_state(device, KGSL_STATE_SUSPEND);
 			break;
@@ -2115,7 +2115,7 @@ void kgsl_unregister_device(struct kgsl_device *device)
 	kgsl_pwrctrl_uninit_sysfs(device);
 
 	wake_lock_destroy(&device->idle_wakelock);
-	pm_qos_remove_request(&device->pm_qos_req_dma);
+	pm_qos_remove_request(device->pm_qos_req_dma);
 
 	idr_destroy(&device->context_idr);
 
@@ -2207,7 +2207,7 @@ kgsl_register_device(struct kgsl_device *device)
 		goto err_close_mmu;
 
 	wake_lock_init(&device->idle_wakelock, WAKE_LOCK_IDLE, device->name);
-	pm_qos_add_request(&device->pm_qos_req_dma, PM_QOS_CPU_DMA_LATENCY,
+	device->pm_qos_req_dma = pm_qos_add_request(PM_QOS_CPU_DMA_LATENCY,
 				PM_QOS_DEFAULT_VALUE);
 
 	idr_init(&device->context_idr);
