@@ -389,6 +389,15 @@ config MMC_MSM_SDIO_SUPPORT
 	help
 	  This enables SDIO support in the msm_sdcc driver.
 
+config MMC_MSM_AR6003_COMPAT
+	boolean "Qualcomm MSM workarounds for Atheros AR6003 driver"
+	depends on MMC_MSM_SDIO_SUPPORT
+	default n
+	help
+	  Select Y to enable workarounds in MSM SDCC driver
+	  for the proprietary AR6003 driver. Not needed for the
+	  open source ath6kl driver.
+
 config MMC_MSM_CARD_HW_DETECTION
 	boolean "Qualcomm MMC Hardware detection support"
 	depends on MMC_MSM
