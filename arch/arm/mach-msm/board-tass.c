@@ -2362,13 +2362,13 @@ static struct mmc_platform_data msm7x2x_sdc1_data = {
 	.status_irq	= MSM_GPIO_TO_INT(49),
 	.irq_flags      = IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 #endif
-#if 1 /* ATHEROS */
+	.msmsdcc_fmin	= 144000,
+	.msmsdcc_fmid	= 24576000,
+	.msmsdcc_fmax	= 49152000,
+	.nonremovable	= 0,
+#ifdef CONFIG_MMC_MSM_SDC1_DUMMY52_REQUIRED
 	.dummy52_required = 1,
-#endif /* ATHEROS */
-	.msmsdcc_fmin   = 144000,
-	.msmsdcc_fmid   = 24576000,
-	.msmsdcc_fmax   = 49152000,
-	.nonremovable   = 0,
+#endif
 };
 #endif
 
@@ -2380,15 +2380,17 @@ static struct mmc_platform_data msm7x2x_sdc2_data = {
 #ifndef ATH_POLLING
 	.status = wlan_status,
 	.register_status_notify	= register_wlan_status_notify,
-#endif /* ATH_POLLING */
-	.dummy52_required = 1,
+#endif
 #ifdef CONFIG_MMC_MSM_SDIO_SUPPORT
 	.sdiowakeup_irq = MSM_GPIO_TO_INT(66),
 #endif
-	.msmsdcc_fmin   = 144000,
-	.msmsdcc_fmid   = 24576000,
-	.msmsdcc_fmax   = 49152000,
-	.nonremovable   = 0,
+	.msmsdcc_fmin	= 144000,
+	.msmsdcc_fmid	= 24576000,
+	.msmsdcc_fmax	= 49152000,
+	.nonremovable	= 0,
+#ifdef CONFIG_MMC_MSM_SDC2_DUMMY52_REQUIRED
+	.dummy52_required = 1,
+#endif
 };
 #endif
 
@@ -2401,6 +2403,9 @@ static struct mmc_platform_data msm7x2x_sdc3_data = {
 	.msmsdcc_fmid	= 24576000,
 	.msmsdcc_fmax	= 49152000,
 	.nonremovable	= 0,
+#ifdef CONFIG_MMC_MSM_SDC3_DUMMY52_REQUIRED
+	.dummy52_required = 1,
+#endif
 };
 #endif
 
@@ -2413,6 +2418,9 @@ static struct mmc_platform_data msm7x2x_sdc4_data = {
 	.msmsdcc_fmid	= 24576000,
 	.msmsdcc_fmax	= 49152000,
 	.nonremovable	= 0,
+#ifdef CONFIG_MMC_MSM_SDC4_DUMMY52_REQUIRED
+	.dummy52_required = 1,
+#endif
 };
 #endif
 
