@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2002,2007-2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -76,16 +76,10 @@ struct kgsl_device;
 #define MH_INTERRUPT_MASK__AXI_WRITE_ERROR                 0x00000002L
 #define MH_INTERRUPT_MASK__MMU_PAGE_FAULT                  0x00000004L
 
-#ifdef CONFIG_MSM_KGSL_MMU
 #define KGSL_MMU_INT_MASK \
 	(MH_INTERRUPT_MASK__AXI_READ_ERROR | \
 	 MH_INTERRUPT_MASK__AXI_WRITE_ERROR | \
 	 MH_INTERRUPT_MASK__MMU_PAGE_FAULT)
-#else
-#define KGSL_MMU_INT_MASK \
-	(MH_INTERRUPT_MASK__AXI_READ_ERROR | \
-	 MH_INTERRUPT_MASK__AXI_WRITE_ERROR)
-#endif
 
 enum kgsl_mmutype {
 	KGSL_MMU_TYPE_GPU = 0,
@@ -190,5 +184,12 @@ int kgsl_mmu_pt_equal(struct kgsl_pagetable *pt,
 void kgsl_mmu_set_mmutype(char *mmutype);
 unsigned int kgsl_mmu_get_current_ptbase(struct kgsl_device *device);
 enum kgsl_mmutype kgsl_mmu_get_mmutype(void);
-#endif /* __KGSL_MMU_H */
 
+static inline int kgsl_mmu_gpuaddr_in_range(unsigned int gpuaddr)
+{
+	return ((gpuaddr >= KGSL_PAGETABLE_BASE) &&
+		(gpuaddr <
+		 (KGSL_PAGETABLE_BASE + CONFIG_MSM_KGSL_PAGE_TABLE_SIZE)));
+}
+
+#endif /* __KGSL_MMU_H */

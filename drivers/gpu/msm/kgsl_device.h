@@ -1,5 +1,4 @@
-/* Copyright (c) 2002,2007-2011, Code Aurora Forum. All rights reserved.
- * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
+/* Copyright (c) 2002,2007-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -47,6 +46,7 @@
 #define KGSL_STATE_SUSPEND	0x00000010
 #define KGSL_STATE_HUNG		0x00000020
 #define KGSL_STATE_DUMP_AND_RECOVER	0x00000040
+#define KGSL_STATE_SLUMBER	0x00000080
 
 #define KGSL_GRAPHICS_MEMORY_LOW_WATERMARK  0x1000000
 
@@ -90,6 +90,9 @@ struct kgsl_functable {
 	void (*power_stats)(struct kgsl_device *device,
 		struct kgsl_power_stats *stats);
 	void (*irqctrl)(struct kgsl_device *device, int state);
+	unsigned int (*gpuid)(struct kgsl_device *device);
+	void * (*snapshot)(struct kgsl_device *device, void *snapshot,
+		int *remain, int hang);
 	/* Optional functions - these functions are not mandatory.  The
 	   driver will check that the function pointer is not NULL before
 	   calling the hook */
@@ -124,6 +127,7 @@ struct kgsl_event {
 	void (*func)(struct kgsl_device *, void *, u32);
 	void *priv;
 	struct list_head list;
+	struct kgsl_device_private *owner;
 };
 
 
@@ -152,7 +156,6 @@ struct kgsl_device {
 	uint32_t state;
 	uint32_t requested_state;
 
-	struct list_head memqueue;
 	unsigned int active_cnt;
 	struct completion suspend_gate;
 
@@ -164,6 +167,15 @@ struct kgsl_device {
 	struct idr context_idr;
 	struct early_suspend display_off;
 
+	void *snapshot;		/* Pointer to the snapshot memory region */
+	int snapshot_maxsize;   /* Max size of the snapshot region */
+	int snapshot_size;      /* Current size of the snapshot region */
+	u32 snapshot_timestamp;	/* Timestamp of the last valid snapshot */
+	int snapshot_frozen;	/* 1 if the snapshot output is frozen until
+				   it gets read by the user.  This avoids
+				   losing the output on multiple hangs  */
+	struct kobject snapshot_kobj;
+
 	/* Logging levels */
 	int cmd_log;
 	int ctxt_log;
@@ -173,8 +185,10 @@ struct kgsl_device {
 	struct wake_lock idle_wakelock;
 	struct kgsl_pwrscale pwrscale;
 	struct kobject pwrscale_kobj;
+	struct pm_qos_request_list pm_qos_req_dma;
 	struct work_struct ts_expired_ws;
 	struct list_head events;
+	s64 on_time;
 };
 
 struct kgsl_context {
@@ -185,24 +199,26 @@ struct kgsl_context {
 
 	/* Pointer to the device specific context information */
 	void *devctxt;
+	/*
+	 * Status indicating whether a gpu reset occurred and whether this
+	 * context was responsible for causing it
+	 */
+	unsigned int reset_status;
 };
 
 struct kgsl_process_private {
 	unsigned int refcnt;
 	pid_t pid;
 	spinlock_t mem_lock;
-	struct list_head mem_list;
+	struct rb_root mem_rb;
 	struct kgsl_pagetable *pagetable;
 	struct list_head list;
-	struct kobject *kobj;
+	struct kobject kobj;
 
 	struct {
-		unsigned int user;
-		unsigned int user_max;
-		unsigned int mapped;
-		unsigned int mapped_max;
-		unsigned int flushes;
-	} stats;
+		unsigned int cur;
+		unsigned int max;
+	} stats[KGSL_MEM_ENTRY_MAX];
 };
 
 struct kgsl_device_private {
@@ -216,6 +232,14 @@ struct kgsl_power_stats {
 };
 
 struct kgsl_device *kgsl_get_device(int dev_idx);
+
+static inline void kgsl_process_add_stats(struct kgsl_process_private *priv,
+	unsigned int type, size_t size)
+{
+	priv->stats[type].cur += size;
+	if (priv->stats[type].max < priv->stats[type].cur)
+		priv->stats[type].max = priv->stats[type].cur;
+}
 
 static inline void kgsl_regread(struct kgsl_device *device,
 				unsigned int offsetwords,
@@ -236,8 +260,13 @@ static inline int kgsl_idle(struct kgsl_device *device, unsigned int timeout)
 	return device->ftbl->idle(device, timeout);
 }
 
+static inline unsigned int kgsl_gpuid(struct kgsl_device *device)
+{
+	return device->ftbl->gpuid(device);
+}
+
 static inline int kgsl_create_device_sysfs_files(struct device *root,
-	struct device_attribute **list)
+	const struct device_attribute **list)
 {
 	int ret = 0, i;
 	for (i = 0; list[i] != NULL; i++)
@@ -246,7 +275,7 @@ static inline int kgsl_create_device_sysfs_files(struct device *root,
 }
 
 static inline void kgsl_remove_device_sysfs_files(struct device *root,
-	struct device_attribute **list)
+	const struct device_attribute **list)
 {
 	int i;
 	for (i = 0; list[i] != NULL; i++)
@@ -273,10 +302,11 @@ static inline struct kgsl_device *kgsl_device_from_dev(struct device *dev)
 
 static inline int kgsl_create_device_workqueue(struct kgsl_device *device)
 {
-	device->work_queue = create_workqueue(device->name);
+	device->work_queue = create_singlethread_workqueue(device->name);
 	if (!device->work_queue) {
-		KGSL_DRV_ERR(device, "create_workqueue(%s) failed\n",
-			device->name);
+		KGSL_DRV_ERR(device,
+			     "create_singlethread_workqueue(%s) failed\n",
+			     device->name);
 		return -EINVAL;
 	}
 	return 0;
@@ -306,5 +336,10 @@ int kgsl_device_platform_probe(struct kgsl_device *device,
 		irqreturn_t (*dev_isr) (int, void*));
 void kgsl_device_platform_remove(struct kgsl_device *device);
 
-#endif  /* __KGSL_DEVICE_H */
+const char *kgsl_pwrstate_to_str(unsigned int state);
 
+int kgsl_device_snapshot_init(struct kgsl_device *device);
+int kgsl_device_snapshot(struct kgsl_device *device, int hang);
+void kgsl_device_snapshot_close(struct kgsl_device *device);
+
+#endif  /* __KGSL_DEVICE_H */

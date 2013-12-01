@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2008-2011, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2002,2008-2011, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -24,9 +24,6 @@
 
 unsigned int kgsl_cff_dump_enable;
 int kgsl_pm_regs_enabled;
-
-static uint32_t kgsl_ib_base;
-static uint32_t kgsl_ib_size;
 
 static struct dentry *pm_d_debugfs;
 
@@ -115,98 +112,6 @@ static int kgsl_hex_dump(const char *prefix, int c, uint8_t *data,
 	return ss;
 }
 
-static ssize_t kgsl_ib_dump_read(
-	struct file *file,
-	char __user *buff,
-	size_t buff_count,
-	loff_t *ppos)
-{
-	int i, count = kgsl_ib_size, remaining, pos = 0, tot = 0, ss;
-	struct kgsl_device *device = file->private_data;
-	const int rowc = 32;
-	unsigned int pt_base, ib_memsize;
-	uint8_t *base_addr;
-	char linebuf[80];
-
-	if (!ppos || !device || !kgsl_ib_base)
-		return 0;
-
-	kgsl_regread(device, MH_MMU_PT_BASE, &pt_base);
-	base_addr = kgsl_sharedmem_convertaddr(device, pt_base, kgsl_ib_base,
-		&ib_memsize);
-
-	if (!base_addr)
-		return 0;
-
-	pr_info("%s ppos=%ld, buff_count=%d, count=%d\n", __func__, (long)*ppos,
-		buff_count, count);
-	ss = snprintf(linebuf, sizeof(linebuf), "IB: base=%08x(%08x"
-		"), size=%d, memsize=%d\n", kgsl_ib_base,
-		(uint32_t)base_addr, kgsl_ib_size, ib_memsize);
-	if (*ppos == 0) {
-		if (copy_to_user(buff, linebuf, ss+1))
-			return -EFAULT;
-		tot += ss;
-		buff += ss;
-		*ppos += ss;
-	}
-	pos += ss;
-	remaining = count;
-	for (i = 0; i < count; i += rowc) {
-		int linec = min(remaining, rowc);
-
-		remaining -= rowc;
-		ss = kgsl_hex_dump("IB: %05x: ", i, base_addr, rowc, linec,
-			buff);
-		if (ss < 0)
-			return ss;
-
-		if (pos >= *ppos) {
-			if (tot+ss >= buff_count) {
-				ss = copy_to_user(buff, "", 1);
-				return tot;
-			}
-			tot += ss;
-			buff += ss;
-			*ppos += ss;
-		}
-		pos += ss;
-		base_addr += linec;
-	}
-
-	return tot;
-}
-
-static ssize_t kgsl_ib_dump_write(
-	struct file *file,
-	const char __user *buff,
-	size_t count,
-	loff_t *ppos)
-{
-	char local_buff[64];
-
-	if (count >= sizeof(local_buff))
-		return -EFAULT;
-
-	if (copy_from_user(local_buff, buff, count))
-		return -EFAULT;
-
-	local_buff[count] = 0;	/* end of string */
-	sscanf(local_buff, "%x %d", &kgsl_ib_base, &kgsl_ib_size);
-
-	pr_info("%s: base=%08X size=%d\n", __func__, kgsl_ib_base,
-		kgsl_ib_size);
-
-	return count;
-}
-
-static const struct file_operations kgsl_ib_dump_fops = {
-	.open = kgsl_dbgfs_open,
-	.release = kgsl_dbgfs_release,
-	.read = kgsl_ib_dump_read,
-	.write = kgsl_ib_dump_write,
-};
-
 static int kgsl_regread_nolock(struct kgsl_device *device,
 	unsigned int offsetwords, unsigned int *value)
 {
@@ -223,21 +128,22 @@ static int kgsl_regread_nolock(struct kgsl_device *device,
 	return 0;
 }
 
-#define KGSL_ISTORE_START 0x5000
-#define KGSL_ISTORE_LENGTH 0x600
 static ssize_t kgsl_istore_read(
 	struct file *file,
 	char __user *buff,
 	size_t buff_count,
 	loff_t *ppos)
 {
-	int i, count = KGSL_ISTORE_LENGTH, remaining, pos = 0, tot = 0;
+	int i, count, remaining, pos = 0, tot = 0;
 	struct kgsl_device *device = file->private_data;
 	const int rowc = 8;
+	struct adreno_device *adreno_dev;
 
 	if (!ppos || !device)
 		return 0;
 
+	adreno_dev = ADRENO_DEVICE(device);
+	count = adreno_dev->istore_size * ADRENO_ISTORE_WORDS;
 	remaining = count;
 	for (i = 0; i < count; i += rowc) {
 		unsigned int vals[rowc];
@@ -248,7 +154,8 @@ static ssize_t kgsl_istore_read(
 		if (pos >= *ppos) {
 			for (j = 0; j < linec; ++j)
 				kgsl_regread_nolock(device,
-					KGSL_ISTORE_START+i+j, vals+j);
+						    ADRENO_ISTORE_START + i + j,
+						    vals + j);
 		} else
 			memset(vals, 0, sizeof(vals));
 
@@ -426,8 +333,6 @@ void adreno_debugfs_init(struct kgsl_device *device)
 	if (!device->d_debugfs || IS_ERR(device->d_debugfs))
 		return;
 
-	debugfs_create_file("ib_dump",  0600, device->d_debugfs, device,
-			    &kgsl_ib_dump_fops);
 	debugfs_create_file("istore",   0400, device->d_debugfs, device,
 			    &kgsl_istore_fops);
 	debugfs_create_file("sx_debug", 0400, device->d_debugfs, device,
@@ -440,6 +345,8 @@ void adreno_debugfs_init(struct kgsl_device *device)
 			    &kgsl_cff_dump_enable_fops);
 	debugfs_create_u32("wait_timeout", 0644, device->d_debugfs,
 		&adreno_dev->wait_timeout);
+	debugfs_create_u32("ib_check", 0644, device->d_debugfs,
+			   &adreno_dev->ib_check_level);
 
 	/* Create post mortem control files */
 
@@ -453,4 +360,3 @@ void adreno_debugfs_init(struct kgsl_device *device)
 	debugfs_create_file("regs_enabled", 0644, pm_d_debugfs, device,
 			    &pm_regs_enabled_fops);
 }
-

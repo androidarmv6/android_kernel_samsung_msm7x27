@@ -1,5 +1,4 @@
-/* Copyright (c) 2010-2011, Code Aurora Forum. All rights reserved.
- * Copyright (C) 2011 Sony Ericsson Mobile Communications AB.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -43,7 +42,7 @@ static struct kgsl_pwrscale_policy *kgsl_pwrscale_policies[] = {
 #ifdef CONFIG_MSM_SCM
 	&kgsl_pwrscale_policy_tz,
 #endif
-#ifdef CONFIG_MSM_SLEEP_STATS
+#ifdef CONFIG_MSM_SLEEP_STATS_DEVICE
 	&kgsl_pwrscale_policy_idlestats,
 #endif
 	NULL
@@ -91,7 +90,7 @@ static ssize_t pwrscale_policy_show(struct kgsl_device *device, char *buf)
 	return ret;
 }
 
-PWRSCALE_ATTR(policy, 0644, pwrscale_policy_show, pwrscale_policy_store);
+PWRSCALE_ATTR(policy, 0664, pwrscale_policy_show, pwrscale_policy_store);
 
 static ssize_t pwrscale_avail_policies_show(struct kgsl_device *device,
 					    char *buf)
@@ -186,12 +185,12 @@ static void pwrscale_sysfs_release(struct kobject *kobj)
 {
 }
 
-static struct sysfs_ops policy_sysfs_ops = {
+static const struct sysfs_ops policy_sysfs_ops = {
 	.show = policy_sysfs_show,
 	.store = policy_sysfs_store
 };
 
-static struct sysfs_ops pwrscale_sysfs_ops = {
+static const struct sysfs_ops pwrscale_sysfs_ops = {
 	.show = pwrscale_sysfs_show,
 	.store = pwrscale_sysfs_store
 };
@@ -268,7 +267,6 @@ void kgsl_pwrscale_policy_remove_files(struct kgsl_device *device,
 	sysfs_remove_group(&pwrscale->kobj, attr_group);
 	kobject_del(&pwrscale->kobj);
 	kobject_put(&pwrscale->kobj);
-	pwrscale->kobj.state_initialized = 0;
 }
 
 static void _kgsl_pwrscale_detach_policy(struct kgsl_device *device)
@@ -298,6 +296,11 @@ int kgsl_pwrscale_attach_policy(struct kgsl_device *device,
 
 	if (device->pwrscale.policy == policy)
 		goto done;
+
+	if (device->pwrctrl.num_pwrlevels < 3) {
+		ret = -EINVAL;
+		goto done;
+	}
 
 	if (device->pwrscale.policy != NULL)
 		_kgsl_pwrscale_detach_policy(device);
@@ -337,4 +340,3 @@ void kgsl_pwrscale_close(struct kgsl_device *device)
 	kobject_put(&device->pwrscale_kobj);
 }
 EXPORT_SYMBOL(kgsl_pwrscale_close);
-
