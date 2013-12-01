@@ -1515,10 +1515,34 @@ set_polling(struct device *dev, struct device_attribute *attr,
 	return count;
 }
 
+#ifdef CONFIG_MMC_MSM_AR6003_COMPAT
+/* ATHENV +++ */
+static ssize_t
+set_detect_change(struct device *dev, struct device_attribute *attr,
+		const char *buf, size_t count)
+{
+	struct mmc_host *mmc = dev_get_drvdata(dev);
+	struct msmsdcc_host *host = mmc_priv(mmc);
+	int value;
+	if (sscanf(buf, "%d", &value)==1 && value) {
+		mmc_detect_change(host->mmc, 0);
+	}
+	return count;
+}
+static DEVICE_ATTR(detect_change, S_IRUGO | S_IWUSR,
+		NULL, set_detect_change);
+/* ATHENV --- */
+#endif
+
 static DEVICE_ATTR(polling, S_IRUGO | S_IWUSR,
 		show_polling, set_polling);
 static struct attribute *dev_attrs[] = {
 	&dev_attr_polling.attr,
+#ifdef CONFIG_MMC_MSM_AR6003_COMPAT
+/* ATHENV +++ */
+	&dev_attr_detect_change.attr,
+/* ATHENV --- */
+#endif
 	NULL,
 };
 static struct attribute_group dev_attr_grp = {
@@ -2131,7 +2155,11 @@ msmsdcc_runtime_suspend(struct device *dev)
 		return 0;
 
 	if (mmc) {
+#ifndef CONFIG_MMC_MSM_AR6003_COMPAT
+/* ATHENV +++ avoid this otherwise wakelock will prevent system suspend*/
 		host->sdcc_suspending = 1;
+/* ATHENV --- */
+#endif
 		mmc->suspend_task = current;
 
 		/*
