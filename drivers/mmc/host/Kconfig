@@ -511,6 +511,15 @@ config MMC_MSM_SDC5_DUMMY52_REQUIRED
 	  all data commands.  Required for some SDIO cards.
 	  If unsure, say N.
 
+config MMC_MSM_AR6003_COMPAT
+	boolean "Prevent wakelock on proprietary AR6003 driver (Samsung msm7x27)"
+	depends on MMC_MSM
+	default n
+	help
+	  Select Y to enable workarounds in MSM SDCC driver
+	  for the proprietary AR6003 driver. Not needed for the
+	  open source ath6kl driver.
+
 config MMC_TMIO
 	tristate "Toshiba Mobile IO Controller (TMIO) MMC/SD function support"
 	depends on MFD_TMIO || MFD_ASIC3 || MFD_SH_MOBILE_SDHI
