@@ -204,10 +204,12 @@ static void set_pmic_vibrator(int on)
 //	printk("[VIB] %s, input : %s\n",__func__,on ? "ON":"OFF");
 	if (on) {
 		clk_enable(android_vib_clk);
+		gpio_request(VIB_ON, NULL);
 		gpio_direction_output(VIB_ON, VIBRATION_ON);
 		is_vibe_on = 1;
 	} else {
 		if(is_vibe_on) {
+			gpio_request(VIB_ON, NULL);
 			gpio_direction_output(VIB_ON, VIBRATION_OFF);
 			clk_disable(android_vib_clk);
 			is_vibe_on = 0;
