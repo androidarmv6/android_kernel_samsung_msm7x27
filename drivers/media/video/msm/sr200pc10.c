@@ -649,6 +649,14 @@ static long sr200pc10_set_effect(int mode, int effect)
 	}
 		break;
 
+	case CAMERA_EFFECT_AQUA: {
+	PCAM_DEBUG("CAMERA_EFFECT_AQUA");
+	sr200pc10_sensor_write_list(sr200pc10_effect_aqua, sizeof(sr200pc10_effect_aqua)/\
+		sizeof(sr200pc10_effect_aqua[0]), "sr200pc10_effect_aqua"); 
+
+	}
+		break;
+
 	default: {
 
 	printk("<=PCAM=> unexpeceted effect  %s/%d\n", __func__, __LINE__);

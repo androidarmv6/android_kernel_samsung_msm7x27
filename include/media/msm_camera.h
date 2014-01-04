@@ -699,7 +699,8 @@ struct msm_camsensor_info {
 #define EXT_CFG_EFFECT_NORMAL		0
 #define EXT_CFG_EFFECT_NEGATIVE		1
 #define EXT_CFG_EFFECT_MONO		2
-#define EXT_CFG_EFFECT_SEPIA		3	
+#define EXT_CFG_EFFECT_SEPIA		3
+#define EXT_CFG_EFFECT_AQUA		4
 
 #define EXT_CFG_WB_AUTO                    0
 #define EXT_CFG_WB_DAYLIGHT                1

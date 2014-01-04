@@ -474,6 +474,13 @@ void sensor_effect_control(char value)
 		}
 		break;	
 
+		case PCAM_EFFECT_AQUA :{
+		PCAM_DEBUG("PCAM_EFFECT_AQUA");
+		s5k5ca_sensor_write_list(s5k5ca_effect_aqua, S5K5CA_EFFECT_AQUA_REGS,\
+		 "s5k5ca_effect_aqua"); 
+		}
+		break;	
+
 		default :{
 			printk("<=PCAM=> Unexpected Effect mode : %d\n",  value);
 		}
@@ -1622,6 +1629,11 @@ static long s5k5ca_set_effect(int mode, int effect)
 
 	case CAMERA_EFFECT_SEPIA: {
 	PCAM_DEBUG("CAMERA_EFFECT_SEPIA");
+	}
+		break;
+
+	case CAMERA_EFFECT_AQUA: {
+	PCAM_DEBUG("CAMERA_EFFECT_AQUA");
 	}
 		break;
 

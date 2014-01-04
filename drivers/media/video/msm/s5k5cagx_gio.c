@@ -245,6 +245,9 @@ void s5k5cagx_set_effect(char value)
 		case EXT_CFG_EFFECT_SEPIA :
 			S5K5CAGX_WRITE_LIST(s5k5cagx_effect_sepia);
 		break;
+		case EXT_CFG_EFFECT_AQUA :
+			S5K5CAGX_WRITE_LIST(s5k5cagx_effect_aqua);
+		break;
 		default :
 			printk("[S5K5CAGX] Unexpected Effect mode : %d\n",  value);
 		break;
@@ -841,6 +844,10 @@ static long s5k5cagx_config_effect(int mode, int effect)
 		break;
 	case CAMERA_EFFECT_SEPIA: {
 	S5K5CAGX_DEBUG("CAMERA_EFFECT_SEPIA");
+	}
+		break;
+	case CAMERA_EFFECT_AQUA: {
+	S5K5CAGX_DEBUG("CAMERA_EFFECT_AQUA");
 	}
 		break;
 	default: {

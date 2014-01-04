@@ -57,7 +57,8 @@
 #define PCAM_EFFECT_NORMAL		0
 #define PCAM_EFFECT_NEGATIVE		1
 #define PCAM_EFFECT_MONO		2
-#define PCAM_EFFECT_SEPIA		3	
+#define PCAM_EFFECT_SEPIA		3
+#define PCAM_EFFECT_AQUA		4
 
 
 #define PCAM_WB_AUTO                    0

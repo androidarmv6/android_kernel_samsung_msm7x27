@@ -61,7 +61,8 @@
 #define PCAM_EFFECT_NORMAL		0
 #define PCAM_EFFECT_NEGATIVE		1
 #define PCAM_EFFECT_MONO		2
-#define PCAM_EFFECT_SEPIA		3	
+#define PCAM_EFFECT_SEPIA		3
+#define PCAM_EFFECT_AQUA		4
 
 
 #define PCAM_WB_AUTO                    0
@@ -3412,7 +3413,7 @@ s5k5ca_short_t s5k5ca_init0[] =
 {0x0F12, 0x0060},
 
 {0x002A, 0x3286},
-{0x0F12, 0x0001}, //Pre/Post gamma on(원복)
+{0x0F12, 0x0001}, //Pre/Post gamma on(\BF\F8\BA\B9)
 
 {0x002A, 0x032C},
 {0x0F12, 0xAAAA},  //ESD Check 
@@ -3651,7 +3652,7 @@ s5k5ca_short_t s5k5ca_effect_off[] =
 {0x0028, 0x7000},
 
 {0x002A, 0x3286},
-{0x0F12, 0x0001}, //Pre/Post gamma on(원복)
+{0x0F12, 0x0001}, //Pre/Post gamma on(\BF\F8\BA\B9)
 
 {0x002A, 0x021E},
 {0x0F12, 0x0000}, //Normal mode
@@ -3695,7 +3696,7 @@ s5k5ca_short_t s5k5ca_effect_sketch[] =
 {0x0028, 0x7000},
 
 {0x002A, 0x3286},
-{0x0F12, 0x0000}, //Pre/Post gamma on(원복)
+{0x0F12, 0x0000}, //Pre/Post gamma on(\BF\F8\BA\B9)
 
 {0x002A, 0x021E},
 {0x0F12, 0x0006}, //Sketch mode
