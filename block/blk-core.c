@@ -1733,13 +1733,12 @@ EXPORT_SYMBOL_GPL(blk_rq_err_bytes);
 static void blk_account_io_completion(struct request *req, unsigned int bytes)
 {
 	if (blk_do_io_stat(req)) {
-		const int rw = rq_data_dir(req);
+		/*const int rw = rq_data_dir(req);
 		struct hd_struct *part;
 		int cpu;
-
 		cpu = part_stat_lock();
-		part = disk_map_sector_rcu(req->rq_disk, blk_rq_pos(req));
-		part_stat_add(cpu, part, sectors[rw], bytes >> 9);
+		//part = disk_map_sector_rcu(req->rq_disk, blk_rq_pos(req));
+		part_stat_add(cpu, part, sectors[rw], bytes >> 9);*/
 		part_stat_unlock();
 	}
 }

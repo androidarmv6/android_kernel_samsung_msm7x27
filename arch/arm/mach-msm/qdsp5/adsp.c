@@ -384,7 +384,7 @@ int __msm_adsp_write(struct msm_adsp_module *module, unsigned dsp_queue_addr,
 	uint32_t ctrl_word;
 	uint32_t dsp_q_addr;
 	uint32_t dsp_addr;
-	uint32_t cmd_id = 0;
+	//uint32_t cmd_id = 0;
 	int cnt = 0;
 	int ret_status = 0;
 	unsigned long flags;
@@ -493,7 +493,7 @@ int __msm_adsp_write(struct msm_adsp_module *module, unsigned dsp_queue_addr,
 			cmd_size /= sizeof(uint16_t);
 
 			/* Save the command ID */
-			cmd_id = (uint32_t) buf_ptr[0];
+			//cmd_id = (uint32_t) buf_ptr[0];
 
 			/* Copy the command to DSP memory */
 			cmd_size++;
@@ -505,7 +505,7 @@ int __msm_adsp_write(struct msm_adsp_module *module, unsigned dsp_queue_addr,
 			cmd_size /= sizeof(uint32_t);
 
 			/* Save the command ID */
-			cmd_id = buf_ptr[0];
+			//cmd_id = buf_ptr[0];
 
 			cmd_size++;
 			while (--cmd_size)

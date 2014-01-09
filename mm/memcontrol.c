@@ -2245,8 +2245,7 @@ __mem_cgroup_uncharge_common(struct page *page, enum charge_type ctype)
 {
 	struct page_cgroup *pc;
 	struct mem_cgroup *mem = NULL;
-	struct mem_cgroup_per_zone *mz;
-
+	
 	if (mem_cgroup_disabled())
 		return NULL;
 
@@ -2298,8 +2297,8 @@ __mem_cgroup_uncharge_common(struct page *page, enum charge_type ctype)
 	 * to be reused (freed soon). Exception is SwapCache, it's handled by
 	 * special functions.
 	 */
-
-	mz = page_cgroup_zoneinfo(pc);
+	//struct mem_cgroup_per_zone *mz;
+	//mz = page_cgroup_zoneinfo(pc);
 	unlock_page_cgroup(pc);
 
 	memcg_check_events(mem, page);

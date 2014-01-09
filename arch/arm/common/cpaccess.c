@@ -154,7 +154,7 @@ static unsigned long do_cpregister_rw(int write)
 static ssize_t cp_register_write_sysfs(struct sys_device *dev,
  struct sysdev_attribute *attr, const char *buf, size_t cnt)
 {
-	unsigned long op1, op2, crn, crm, cp = 15, write_value, ret;
+	unsigned long op1, op2, crn, crm, cp = 15, write_value;// ret;
 	char rw;
 	if (down_timeout(&cp_sem, 6000))
 		return -ERESTARTSYS;
@@ -171,12 +171,12 @@ static ssize_t cp_register_write_sysfs(struct sys_device *dev,
 
 	if (per_cpu(cp_param.rw, cpu) == 'w') {
 		do_cpregister_rw(1);
-		ret = cnt;
+		//ret = cnt;
 	}
 
 	if ((per_cpu(cp_param.rw, cpu) != 'w') &&
 	(per_cpu(cp_param.rw, cpu) != 'r')) {
-		ret = -1;
+		//ret = -1;
 		printk(KERN_INFO "Wrong Entry for 'r' or 'w'. \
 			Use cp:op1:crn:crm:op2:r/w:write_value.\n");
 	}

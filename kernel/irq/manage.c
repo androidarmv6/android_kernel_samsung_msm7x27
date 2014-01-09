@@ -649,7 +649,6 @@ static int
 __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
 {
 	struct irqaction *old, **old_ptr;
-	const char *old_name = NULL;
 	unsigned long flags;
 	int nested, shared = 0;
 	int ret;
@@ -731,7 +730,8 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
 		 * set the trigger type must match.
 		 */
 		if (!((old->flags & new->flags) & IRQF_SHARED) ||
-		    ((old->flags ^ new->flags) & IRQF_TRIGGER_MASK)) {
+		((old->flags ^ new->flags) & IRQF_TRIGGER_MASK)) {
+			const char *old_name;
 			old_name = old->name;
 			goto mismatch;
 		}
