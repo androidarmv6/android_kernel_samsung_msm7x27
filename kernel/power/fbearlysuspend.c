@@ -30,7 +30,7 @@ static enum {
 /* tell userspace to stop drawing, wait for it to stop */
 static void stop_drawing_early_suspend(struct early_suspend *h)
 {
-	int ret;
+	//int ret;
 	unsigned long irq_flags;
 
 	spin_lock_irqsave(&fb_state_lock, irq_flags);
@@ -38,9 +38,9 @@ static void stop_drawing_early_suspend(struct early_suspend *h)
 	spin_unlock_irqrestore(&fb_state_lock, irq_flags);
 
 	wake_up_all(&fb_state_wq);
-	ret = wait_event_timeout(fb_state_wq,
+	/*ret = wait_event_timeout(fb_state_wq,
 				 fb_state == FB_STATE_STOPPED_DRAWING,
-				 HZ);
+				 HZ);*/
 	if (unlikely(fb_state != FB_STATE_STOPPED_DRAWING))
 		pr_warning("stop_drawing_early_suspend: timeout waiting for "
 			   "userspace to stop drawing\n");

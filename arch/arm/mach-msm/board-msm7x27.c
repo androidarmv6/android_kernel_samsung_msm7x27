@@ -793,13 +793,13 @@ static void lcdc_s6d04m0_config_gpios(int enable)
 }
 #endif
 
-static char *msm_fb_lcdc_vreg[] = {
+/*static char *msm_fb_lcdc_vreg[] = {
 #if defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_LUCAS)
 	"ldo4"
 #else
 	"ldo3"
 #endif
-};
+};*/
 
 #define MSM_FB_LCDC_VREG_OP(name, op) \
 do { \
@@ -840,8 +840,8 @@ static int msm_fb_lcdc_power_save(int on)
 			mdelay(15);
 		}
 	}
-	return 0;
 #endif
+return 0;
 }
 static struct lcdc_platform_data lcdc_pdata = {
 	.lcdc_gpio_config = msm_fb_lcdc_config,
@@ -2785,6 +2785,8 @@ static struct mmc_platform_data msm7x2x_sdc4_data = {
 
 static void __init msm7x2x_init_mmc(void)
 {
+	int rc;
+	rc = gpio_tlmm_config(GPIO_CFG(49, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
 	if (!machine_is_msm7x25_ffa() && !machine_is_msm7x27_ffa()) {
 		vreg_mmc = vreg_get(NULL, "ldo16");
 #if !defined(CONFIG_MACH_EUROPA) && !defined(CONFIG_MACH_CALLISTO)
@@ -2805,10 +2807,8 @@ static void __init msm7x2x_init_mmc(void)
 		printk (KERN_ERR "Error configuraing GPIO_WLAN_HOST_WAKE\n");
 
 #ifdef CONFIG_MMC_MSM_CARD_HW_DETECTION
-	int rc = 0;
 	if (gpio_request(49, "sdc1_status_irq"))
 		pr_err("failed to request gpio sdc1_status_irq\n");
-	rc = gpio_tlmm_config(GPIO_CFG(49, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
 	if (rc)
 		printk(KERN_ERR "%s: Failed to configure GPIO %d\n",
 				__func__, rc);

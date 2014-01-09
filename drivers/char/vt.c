@@ -831,7 +831,8 @@ static int vc_do_resize(struct tty_struct *tty, struct vc_data *vc,
 				unsigned int cols, unsigned int lines)
 {
 	unsigned long old_origin, new_origin, new_scr_end, rlth, rrem, err = 0;
-	unsigned int old_cols, old_rows, old_row_size, old_screen_size;
+	//unsigned int old_cols, old_rows, old_row_size, old_screen_size;
+	unsigned int old_rows, old_row_size;
 	unsigned int new_cols, new_rows, new_row_size, new_screen_size;
 	unsigned int end, user;
 	unsigned short *newscreen;
@@ -860,9 +861,9 @@ static int vc_do_resize(struct tty_struct *tty, struct vc_data *vc,
 		return -ENOMEM;
 
 	old_rows = vc->vc_rows;
-	old_cols = vc->vc_cols;
+	//old_cols = vc->vc_cols;
 	old_row_size = vc->vc_size_row;
-	old_screen_size = vc->vc_screenbuf_size;
+	//old_screen_size = vc->vc_screenbuf_size;
 
 	err = resize_screen(vc, new_cols, new_rows, user);
 	if (err) {

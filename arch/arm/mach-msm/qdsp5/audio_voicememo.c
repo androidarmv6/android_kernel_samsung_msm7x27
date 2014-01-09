@@ -379,11 +379,11 @@ err:
 static int audvoicememo_disable(struct audio_voicememo *audio)
 {
 	struct rpc_request_hdr rhdr;
-	int rc = 0;
+	//int rc = 0;
 	if (audio->enabled) {
 		msm_rpc_setup_req(&rhdr, audio->rpc_prog, audio->rpc_ver,
 				SND_VOC_REC_STOP_PROC);
-		rc = msm_rpc_write(audio->sndept, &rhdr, sizeof(rhdr));
+		//rc = msm_rpc_write(audio->sndept, &rhdr, sizeof(rhdr));
 		wait_event_timeout(audio->wait, audio->stopped == 0,
 				1 * HZ);
 		wake_up(&audio->read_wait);

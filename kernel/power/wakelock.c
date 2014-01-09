@@ -131,18 +131,18 @@ static int wakelock_stats_show(struct seq_file *m, void *unused)
 {
 	unsigned long irqflags;
 	struct wake_lock *lock;
-	int ret;
+	//int ret;
 	int type;
 
 	spin_lock_irqsave(&list_lock, irqflags);
 
-	ret = seq_puts(m, "name\tcount\texpire_count\twake_count\tactive_since"
-			"\ttotal_time\tsleep_time\tmax_time\tlast_change\n");
+	/*ret = seq_puts(m, "name\tcount\texpire_count\twake_count\tactive_since"
+			"\ttotal_time\tsleep_time\tmax_time\tlast_change\n");*/
 	list_for_each_entry(lock, &inactive_locks, link)
-		ret = print_lock_stat(m, lock);
+		//ret = print_lock_stat(m, lock);
 	for (type = 0; type < WAKE_LOCK_TYPE_COUNT; type++) {
 		list_for_each_entry(lock, &active_wake_locks[type], link)
-			ret = print_lock_stat(m, lock);
+			//ret = print_lock_stat(m, lock);
 	}
 	spin_unlock_irqrestore(&list_lock, irqflags);
 	return 0;

@@ -723,7 +723,7 @@ static int copy_pte_range(struct mm_struct *dst_mm, struct mm_struct *src_mm,
 		pmd_t *dst_pmd, pmd_t *src_pmd, struct vm_area_struct *vma,
 		unsigned long addr, unsigned long end)
 {
-	pte_t *orig_src_pte, *orig_dst_pte;
+	//pte_t *orig_src_pte, *orig_dst_pte;
 	pte_t *src_pte, *dst_pte;
 	spinlock_t *src_ptl, *dst_ptl;
 	int progress = 0;
@@ -739,8 +739,8 @@ again:
 	src_pte = pte_offset_map_nested(src_pmd, addr);
 	src_ptl = pte_lockptr(src_mm, src_pmd);
 	spin_lock_nested(src_ptl, SINGLE_DEPTH_NESTING);
-	orig_src_pte = src_pte;
-	orig_dst_pte = dst_pte;
+	//orig_src_pte = src_pte;
+	//orig_dst_pte = dst_pte;
 	arch_enter_lazy_mmu_mode();
 
 	do {
@@ -767,9 +767,9 @@ again:
 
 	arch_leave_lazy_mmu_mode();
 	spin_unlock(src_ptl);
-	pte_unmap_nested(orig_src_pte);
+	//pte_unmap_nested(orig_src_pte);
 	add_mm_rss_vec(dst_mm, rss);
-	pte_unmap_unlock(orig_dst_pte, dst_ptl);
+	//pte_unmap_unlock(orig_dst_pte, dst_ptl);
 	cond_resched();
 
 	if (entry.val) {
