@@ -1096,11 +1096,11 @@ EXPORT_SYMBOL_GPL(hrtimer_cancel);
  */
 ktime_t hrtimer_get_remaining(const struct hrtimer *timer)
 {
-	struct hrtimer_clock_base *base;
-	unsigned long flags;
+	//struct hrtimer_clock_base *base;
+	unsigned long flags = 0;
 	ktime_t rem;
 
-	base = lock_hrtimer_base(timer, &flags);
+	//base = lock_hrtimer_base(timer, &flags);
 	rem = hrtimer_expires_remaining(timer);
 	unlock_hrtimer_base(timer, &flags);
 

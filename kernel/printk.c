@@ -1608,7 +1608,7 @@ static const char *kmsg_to_str(enum kmsg_dump_reason reason)
 void kmsg_dump(enum kmsg_dump_reason reason)
 {
 	unsigned long end;
-	unsigned chars;
+	//unsigned chars;
 	struct kmsg_dumper *dumper;
 	const char *s1, *s2;
 	unsigned long l1, l2;
@@ -1619,7 +1619,7 @@ void kmsg_dump(enum kmsg_dump_reason reason)
 	   will overwrite the start of what we dump. */
 	spin_lock_irqsave(&logbuf_lock, flags);
 	end = log_end & LOG_BUF_MASK;
-	chars = logged_chars;
+	//chars = logged_chars;
 	spin_unlock_irqrestore(&logbuf_lock, flags);
 
 	if (logged_chars > end) {

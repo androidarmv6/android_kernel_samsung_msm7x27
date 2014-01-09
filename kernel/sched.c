@@ -7529,11 +7529,9 @@ void __init sched_init(void)
 	//{{ Add GAForensic - 2/2
 	/*
 	 *  Add GAForensic init for preventing symbol removal for optimization.
-	 */
-	GAFINFO.rq_struct_curr = offsetof(struct rq, curr);
-	
+	 */	
 	unsigned short *checksum	=	&(GAFINFO.GAFINFOCheckSum);
-	unsigned char  *memory		=	&GAFINFO;
+	unsigned char  *memory		=	(unsigned char *)&GAFINFO;
 	unsigned char	address;
 	for (*checksum=0,address = 0; address < (sizeof(GAFINFO)-sizeof(GAFINFO.GAFINFOCheckSum)); address++)
 	{
@@ -7542,6 +7540,7 @@ void __init sched_init(void)
 		else
 			(*checksum) = ((*checksum) << 1) ^ memory[address];
 	}
+	GAFINFO.rq_struct_curr = offsetof(struct rq, curr);
  	//}} Add GAForensic - 2/2
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
@@ -7896,7 +7895,7 @@ int alloc_fair_sched_group(struct task_group *tg, struct task_group *parent)
 {
 	struct cfs_rq *cfs_rq;
 	struct sched_entity *se;
-	struct rq *rq;
+	//struct rq *rq;
 	int i;
 
 	tg->cfs_rq = kzalloc(sizeof(cfs_rq) * nr_cpu_ids, GFP_KERNEL);
@@ -7909,7 +7908,7 @@ int alloc_fair_sched_group(struct task_group *tg, struct task_group *parent)
 	tg->shares = NICE_0_LOAD;
 
 	for_each_possible_cpu(i) {
-		rq = cpu_rq(i);
+		//rq = cpu_rq(i);
 
 		cfs_rq = kzalloc_node(sizeof(struct cfs_rq),
 				      GFP_KERNEL, cpu_to_node(i));
@@ -7985,7 +7984,7 @@ int alloc_rt_sched_group(struct task_group *tg, struct task_group *parent)
 {
 	struct rt_rq *rt_rq;
 	struct sched_rt_entity *rt_se;
-	struct rq *rq;
+	//struct rq *rq;
 	int i;
 
 	tg->rt_rq = kzalloc(sizeof(rt_rq) * nr_cpu_ids, GFP_KERNEL);
@@ -7999,7 +7998,7 @@ int alloc_rt_sched_group(struct task_group *tg, struct task_group *parent)
 			ktime_to_ns(def_rt_bandwidth.rt_period), 0);
 
 	for_each_possible_cpu(i) {
-		rq = cpu_rq(i);
+		//rq = cpu_rq(i);
 
 		rt_rq = kzalloc_node(sizeof(struct rt_rq),
 				     GFP_KERNEL, cpu_to_node(i));

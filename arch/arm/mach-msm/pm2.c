@@ -1594,8 +1594,8 @@ arch_idle_exit:
  */
 
 // hsil
-extern what_clk[103];
-extern req_clk[103];
+extern int what_clk[103];
+extern int req_clk[103];
 //extern void mdp_pipe_ctrl(MDP_BLOCK_TYPE block, MDP_BLOCK_POWER_STATE state,boolean isr);
 
 static int msm_pm_enter(suspend_state_t state)

@@ -305,20 +305,19 @@ static struct attribute *frontswap_attrs[] = {
 	NULL,
 };
 
-static struct attribute_group frontswap_attr_group = {
+/*static struct attribute_group frontswap_attr_group = {
 	.attrs = frontswap_attrs,
 	.name = "frontswap",
-};
+};*/
 
 #endif /* CONFIG_SYSFS */
 
 static int __init init_frontswap(void)
 {
-#ifdef CONFIG_SYSFS
+/*#ifdef CONFIG_SYSFS
 	int err;
-
 	err = sysfs_create_group(mm_kobj, &frontswap_attr_group);
-#endif /* CONFIG_SYSFS */
+#endif  CONFIG_SYSFS */
 	return 0;
 }
 

@@ -272,7 +272,7 @@ void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 	__u32 aux, bits;
 	__u32 cache_id;
 	int ways;
-	const char *type;
+	//const char *type;
 
 	l2x0_base = base;
 	cache_id = readl_relaxed(l2x0_base + L2X0_CACHE_ID);
@@ -293,16 +293,16 @@ void __init l2x0_init(void __iomem *base, __u32 aux_val, __u32 aux_mask)
 			ways = 16;
 		else
 			ways = 8;
-		type = "L310";
+		//type = "L310";
 		break;
 	case L2X0_CACHE_ID_PART_L210:
 		ways = (aux >> 13) & 0xf;
-		type = "L210";
+		//type = "L210";
 		break;
 	default:
 		/* Assume unknown chips have 8 ways */
 		ways = 8;
-		type = "L2x0 series";
+		//type = "L2x0 series";
 		break;
 	}
 	writel_relaxed(aux, l2x0_base + L2X0_AUX_CTRL);
