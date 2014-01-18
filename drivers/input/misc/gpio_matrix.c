@@ -256,7 +256,7 @@ static void report_key(struct gpio_kp *kp, int key_index, int out, int in)
 				if(!lcd_on_state_for_debug) 
 				    ath_debug_sdio_claimer();
 #endif
-#else
+#elif defined(CONFIG_KERNEL_DEBUG_SEC)
 				printk("key event (keycode:%d, pressed:%d), wlan_debug_step=%d\n", 
 						keycode, pressed, wlan_debug_step);	// sec: sm.kim
 #endif
