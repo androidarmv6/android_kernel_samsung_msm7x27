@@ -530,7 +530,7 @@ static void init_zspage(struct page *first_page, struct size_class *class)
 		if (page != first_page)
 			page->index = off;
 
-		link = (struct link_free *)kmap_atomic(page) +
+		link = (struct link_free *)kmap_atomic(page, KM_USER0) +
 						off / sizeof(*link);
 		objs_on_page = (PAGE_SIZE - off) / class->size;
 
@@ -549,7 +549,7 @@ static void init_zspage(struct page *first_page, struct size_class *class)
 		 */
 		next_page = get_next_page(page);
 		link->next = obj_location_to_handle(next_page, 0);
-		kunmap_atomic(link);
+		kunmap_atomic(link, KM_USER0);
 		page = next_page;
 		off = (off + class->size) % PAGE_SIZE;
 	}
@@ -640,7 +640,7 @@ static inline int __zs_cpu_up(struct mapping_area *area)
 	 */
 	if (area->vm)
 		return 0;
-	area->vm = alloc_vm_area(PAGE_SIZE * 2, NULL);
+	area->vm = alloc_vm_area(PAGE_SIZE * 2);
 	if (!area->vm)
 		return -ENOMEM;
 	return 0;
@@ -710,12 +710,12 @@ static void *__zs_map_object(struct mapping_area *area,
 	sizes[1] = size - sizes[0];
 
 	/* copy object to per-cpu buffer */
-	addr = kmap_atomic(pages[0]);
+	addr = kmap_atomic(pages[0], KM_USER0);
 	memcpy(buf, addr + off, sizes[0]);
-	kunmap_atomic(addr);
-	addr = kmap_atomic(pages[1]);
+	kunmap_atomic(addr, KM_USER0);
+	addr = kmap_atomic(pages[1], KM_USER0);
 	memcpy(buf + sizes[0], addr, sizes[1]);
-	kunmap_atomic(addr);
+	kunmap_atomic(addr, KM_USER0);
 out:
 	return area->vm_buf;
 }
@@ -735,12 +735,12 @@ static void __zs_unmap_object(struct mapping_area *area,
 	sizes[1] = size - sizes[0];
 
 	/* copy per-cpu buffer to object */
-	addr = kmap_atomic(pages[0]);
+	addr = kmap_atomic(pages[0], KM_USER0);
 	memcpy(addr + off, buf, sizes[0]);
-	kunmap_atomic(addr);
-	addr = kmap_atomic(pages[1]);
+	kunmap_atomic(addr, KM_USER0);
+	addr = kmap_atomic(pages[1], KM_USER0);
 	memcpy(addr, buf + sizes[0], sizes[1]);
-	kunmap_atomic(addr);
+	kunmap_atomic(addr, KM_USER0);
 
 out:
 	/* enable page faults to match kunmap_atomic() return conditions */
@@ -906,11 +906,11 @@ unsigned long zs_malloc(struct zs_pool *pool, size_t size)
 	obj_handle_to_location(obj, &m_page, &m_objidx);
 	m_offset = obj_idx_to_offset(m_page, m_objidx, class->size);
 
-	link = (struct link_free *)kmap_atomic(m_page) +
+	link = (struct link_free *)kmap_atomic(m_page, KM_USER0) +
 					m_offset / sizeof(*link);
 	first_page->freelist = link->next;
 	memset(link, POISON_INUSE, sizeof(*link));
-	kunmap_atomic(link);
+	kunmap_atomic(link, KM_USER0);
 
 	first_page->inuse++;
 	/* Now move the zspage to another fullness group, if required */
@@ -944,10 +944,10 @@ void zs_free(struct zs_pool *pool, unsigned long obj)
 	spin_lock(&class->lock);
 
 	/* Insert this object in containing zspage's freelist */
-	link = (struct link_free *)((unsigned char *)kmap_atomic(f_page)
+	link = (struct link_free *)((unsigned char *)kmap_atomic(f_page, KM_USER0)
 							+ f_offset);
 	link->next = first_page->freelist;
-	kunmap_atomic(link);
+	kunmap_atomic(link, KM_USER0);
 	first_page->freelist = (void *)obj;
 
 	first_page->inuse--;
@@ -1007,7 +1007,7 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
 	area->vm_mm = mm;
 	if (off + class->size <= PAGE_SIZE) {
 		/* this object is contained entirely within a page */
-		area->vm_addr = kmap_atomic(page);
+		area->vm_addr = kmap_atomic(page, KM_USER0);
 		return area->vm_addr + off;
 	}
 
@@ -1039,7 +1039,7 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
 
 	area = &__get_cpu_var(zs_map_area);
 	if (off + class->size <= PAGE_SIZE)
-		kunmap_atomic(area->vm_addr);
+		kunmap_atomic(area->vm_addr, KM_USER0);
 	else {
 		struct page *pages[2];
 
