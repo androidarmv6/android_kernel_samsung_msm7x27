@@ -222,11 +222,12 @@ static struct zram_meta *zram_meta_alloc(u64 disksize)
 	}
 
 	num_pages = disksize >> PAGE_SHIFT;
-	meta->table = vzalloc(num_pages * sizeof(*meta->table));
+	meta->table = vmalloc(num_pages * sizeof(*meta->table));
 	if (!meta->table) {
 		pr_err("Error allocating zram address table\n");
 		goto free_buffer;
 	}
+	memset(meta->table, 0, num_pages * sizeof(*meta->table));
 
 	meta->mem_pool = zs_create_pool(GFP_NOIO | __GFP_HIGHMEM |
 					__GFP_NOWARN);
@@ -277,12 +278,12 @@ static void handle_zero_page(struct bio_vec *bvec)
 	struct page *page = bvec->bv_page;
 	void *user_mem;
 
-	user_mem = kmap_atomic(page);
+	user_mem = kmap_atomic(page, KM_USER0);
 	if (is_partial_io(bvec))
 		memset(user_mem + bvec->bv_offset, 0, bvec->bv_len);
 	else
 		clear_page(user_mem);
-	kunmap_atomic(user_mem);
+	kunmap_atomic(user_mem, KM_USER0);
 
 	flush_dcache_page(page);
 }
@@ -370,7 +371,7 @@ static int zram_bvec_read(struct zram *zram, struct bio_vec *bvec,
 		/* Use  a temporary buffer to decompress the page */
 		uncmem = kmalloc(PAGE_SIZE, GFP_NOIO);
 
-	user_mem = kmap_atomic(page);
+	user_mem = kmap_atomic(page, KM_USER0);
 	if (!is_partial_io(bvec))
 		uncmem = user_mem;
 
@@ -392,7 +393,7 @@ static int zram_bvec_read(struct zram *zram, struct bio_vec *bvec,
 	flush_dcache_page(page);
 	ret = 0;
 out_cleanup:
-	kunmap_atomic(user_mem);
+	kunmap_atomic(user_mem, KM_USER0);
 	if (is_partial_io(bvec))
 		kfree(uncmem);
 	return ret;
@@ -427,19 +428,19 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
 			goto out;
 	}
 
-	user_mem = kmap_atomic(page);
+	user_mem = kmap_atomic(page, KM_USER0);
 
 	if (is_partial_io(bvec)) {
 		memcpy(uncmem + offset, user_mem + bvec->bv_offset,
 		       bvec->bv_len);
-		kunmap_atomic(user_mem);
+		kunmap_atomic(user_mem, KM_USER0);
 		user_mem = NULL;
 	} else {
 		uncmem = user_mem;
 	}
 
 	if (page_zero_filled(uncmem)) {
-		kunmap_atomic(user_mem);
+		kunmap_atomic(user_mem, KM_USER0);
 		/* Free memory associated with this sector now. */
 		zram_free_page(zram, index);
 
@@ -461,7 +462,7 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
 			       meta->compress_workmem);
 
 	if (!is_partial_io(bvec)) {
-		kunmap_atomic(user_mem);
+		kunmap_atomic(user_mem, KM_USER0);
 		user_mem = NULL;
 		uncmem = NULL;
 	}
@@ -491,9 +492,9 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
 	cmem = zs_map_object(meta->mem_pool, handle, ZS_MM_WO);
 
 	if ((clen == PAGE_SIZE) && !is_partial_io(bvec)) {
-		src = kmap_atomic(page);
+		src = kmap_atomic(page, KM_USER0);
 		copy_page(cmem, src);
-		kunmap_atomic(src);
+		kunmap_atomic(src, KM_USER0);
 	} else {
 		memcpy(cmem, src, clen);
 	}
@@ -652,7 +653,7 @@ static ssize_t reset_store(struct device *dev,
 		struct device_attribute *attr, const char *buf, size_t len)
 {
 	int ret;
-	unsigned short do_reset;
+	unsigned long do_reset;
 	struct zram *zram;
 	struct block_device *bdev;
 
@@ -663,7 +664,7 @@ static ssize_t reset_store(struct device *dev,
 	if (bdev->bd_holders)
 		return -EBUSY;
 
-	ret = kstrtou16(buf, 10, &do_reset);
+	ret = strict_strtoul(buf, 10, &do_reset);
 	if (ret)
 		return ret;
 
@@ -736,7 +737,7 @@ out:
 /*
  * Handler function for all zram I/O requests.
  */
-static void zram_make_request(struct request_queue *queue, struct bio *bio)
+static int zram_make_request(struct request_queue *queue, struct bio *bio)
 {
 	struct zram *zram = queue->queuedata;
 
@@ -752,11 +753,12 @@ static void zram_make_request(struct request_queue *queue, struct bio *bio)
 	__zram_make_request(zram, bio, bio_data_dir(bio));
 	up_read(&zram->init_lock);
 
-	return;
+	return 0;
 
 error:
 	up_read(&zram->init_lock);
 	bio_io_error(bio);
+	return 0;
 }
 
 static void zram_slot_free(struct work_struct *work)
