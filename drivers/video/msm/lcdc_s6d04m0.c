@@ -774,7 +774,7 @@ static void lcdc_s6d04m0_set_backlight(struct msm_fb_data_type *mfd)
 	else
 		tune_level = bl_level;
 
-	//if(!bl_level || lcd_brightness <= 0)		// reduce log msg
+	if(!bl_level || lcd_brightness <= 0)		// reduce log msg
 		DPRINT("%s:%d,%d\n", __func__, bl_level, tune_level);	
 
 	// turn on lcd if needed
