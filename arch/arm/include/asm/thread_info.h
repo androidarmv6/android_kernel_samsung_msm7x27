@@ -144,6 +144,7 @@ extern void vfp_flush_hwstate(struct thread_info *);
 #define TIF_MEMDIE		18	/* is terminating due to OOM killer */
 #define TIF_FREEZE		19
 #define TIF_RESTORE_SIGMASK	20
+#define TIF_MM_RELEASED		21	/* task MM has been released */
 
 #define _TIF_SIGPENDING		(1 << TIF_SIGPENDING)
 #define _TIF_NEED_RESCHED	(1 << TIF_NEED_RESCHED)
