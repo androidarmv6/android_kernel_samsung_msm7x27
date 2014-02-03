@@ -253,11 +253,13 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 	rcu_read_lock();
 	for_each_process(tsk) {
 		struct task_struct *p;
-		struct mm_struct *mm;
-		struct signal_struct *sig;
 		int oom_score_adj;
 
 		if (tsk->flags & PF_KTHREAD)
+			continue;
+
+		/* if task no longer has any memory ignore it */
+		if (test_task_flag(tsk, TIF_MM_RELEASED))
 			continue;
 
 		if (time_before_eq(jiffies, lowmem_deathpending_timeout)) {
@@ -273,15 +275,6 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 		p = find_lock_task_mm(tsk);
 		if (!p)
 			continue;
-
-		/* if task no longer has any memory ignore it */
-		/*  - use old 2.6.35 version 'cos there is no TIF_MM_RELEASED in this kernel */
-		mm = p->mm;
-		sig = p->signal;
-		if(!mm || !sig) {
-			task_unlock(p);
-			continue;
-		}
 
 		oom_score_adj = p->signal->oom_adj;
 		if (oom_score_adj < min_score_adj) {
