@@ -844,7 +844,7 @@ static void lcd_det_work_func(struct work_struct *work)
 
 #endif
 
-static int __init s6d04h0a_probe(struct platform_device *pdev)
+static int s6d04h0a_probe(struct platform_device *pdev)
 {
 	int ret = 0;
 	printk("++++++pdev->id=%d\n", pdev->id);
@@ -931,7 +931,7 @@ static void s6d04h0a_shutdown(struct platform_device *pdev)
 	}
 
 	if(lcd_det_data.irq > 0) {
-		free_irq(lcd_det_data.irq,pdev->id);
+		free_irq(lcd_det_data.irq,&lcd_det_data);
 		lcd_det_data.irq = -1;
 	}
 	lcdc_s6d04h0a_panel_off(pdev);

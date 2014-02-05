@@ -486,7 +486,7 @@ static void lcdc_s6d04h0a_set_backlight(struct msm_fb_data_type *mfd)
 }
 
 
-static int __init s6d04h0a_probe(struct platform_device *pdev)
+static int s6d04h0a_probe(struct platform_device *pdev)
 {
 	printk("++++++pdev->id=%d\n", pdev->id);
 

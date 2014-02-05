@@ -121,7 +121,7 @@ static int msm_vibrator_resume(struct platform_device *pdev)
 	return VIBE_S_SUCCESS;
 }
 
-static int __devexit msm_vibrator_exit(struct platform_device *pdev)
+static int msm_vibrator_exit(struct platform_device *pdev)
 {
 		printk("[VIB] EXIT\n");
 		return 0;
@@ -336,7 +336,7 @@ static struct timed_output_dev pmic_vibrator = {
 	.enable = vibrator_enable,
 };
 
-static int __devinit msm_vibrator_probe(struct platform_device *pdev)
+static int msm_vibrator_probe(struct platform_device *pdev)
 {
 	hrtimer_init(&vibe_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	vibe_timer.function = vibrator_timer_func;
