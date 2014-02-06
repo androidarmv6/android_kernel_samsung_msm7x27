@@ -753,7 +753,9 @@ static const char * const vmstat_text[] = {
 	"numa_local",
 	"numa_other",
 #endif
-
+#ifdef CONFIG_UKSM
+	"nr_uksm_zero_pages",
+#endif
 #ifdef CONFIG_VM_EVENT_COUNTERS
 	"pgpgin",
 	"pgpgout",
