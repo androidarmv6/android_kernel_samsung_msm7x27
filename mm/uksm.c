@@ -517,7 +517,7 @@ static unsigned int uksm_sleep_saved;
 /* Max percentage of cpu utilization ksmd can take to scan in one batch */
 static unsigned int uksm_max_cpu_percentage;
 
-static int uksm_cpu_governor = 2;
+static int uksm_cpu_governor = 3;
 
 static char *uksm_cpu_governor_str[4] = { "full", "medium", "low", "quiet" };
 
@@ -530,8 +530,8 @@ struct uksm_cpu_preset_s {
 struct uksm_cpu_preset_s uksm_cpu_preset[4] = {
 	{ {20, 40, -2500, -10000}, {1000, 500, 200, 50}, 95},
 	{ {20, 30, -2500, -10000}, {1000, 500, 400, 100}, 50},
-	{ {10, 20, -5000, -10000}, {2000, 1000, 1000, 500}, 10},
-	{ {10, 20, 40, 75}, {2000, 1000, 1000, 1000}, 1},
+	{ {10, 20, -5000, -10000}, {1500, 1000, 1000, 250}, 10},
+	{ {5, 10, 30, 65}, {2500, 2000, 1500, 1000}, 1},
 };
 
 /* The default value for uksm_ema_page_time if it's not initialized */
@@ -4551,7 +4551,7 @@ static int ksmd_should_run(void)
 static int uksm_scan_thread(void *nothing)
 {
 	set_freezable();
-	set_user_nice(current, 5);
+	set_user_nice(current, 10);
 
 	while (!kthread_should_stop()) {
 		mutex_lock(&uksm_thread_mutex);
@@ -5275,7 +5275,7 @@ static struct attribute *uksm_attrs[] = {
 
 static struct attribute_group uksm_attr_group = {
 	.attrs = uksm_attrs,
-	.name = "uksm",
+	.name = "ksm",
 };
 #endif /* CONFIG_SYSFS */
 
@@ -5500,7 +5500,7 @@ static int __init uksm_init(void)
 	struct task_struct *uksm_thread;
 	int err;
 
-	uksm_sleep_jiffies = msecs_to_jiffies(1000);
+	uksm_sleep_jiffies = msecs_to_jiffies(5000);
 	uksm_sleep_saved = uksm_sleep_jiffies;
 
 	slot_tree_init();
