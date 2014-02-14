@@ -1,16 +1,16 @@
 /* drivers/misc/lowmemorykiller.c
  *
  * The lowmemorykiller driver lets user-space specify a set of memory thresholds
- * where processes with a range of oom_score_adj values will get killed. Specify
- * the minimum oom_score_adj values in
+ * where processes with a range of oom_adj values will get killed. Specify
+ * the minimum oom_adj values in
  * /sys/module/lowmemorykiller/parameters/adj and the number of free pages in
  * /sys/module/lowmemorykiller/parameters/minfree. Both files take a comma
  * separated list of numbers in ascending order.
  *
  * For example, write "0,8" to /sys/module/lowmemorykiller/parameters/adj and
  * "1024,4096" to /sys/module/lowmemorykiller/parameters/minfree to kill
- * processes with a oom_score_adj value of 8 or higher when the free memory
- * drops below 4096 pages and kill processes with a oom_score_adj value of 0 or
+ * processes with a oom_adj value of 8 or higher when the free memory
+ * drops below 4096 pages and kill processes with a oom_adj value of 0 or
  * higher when the free memory drops below 1024 pages.
  *
  * The driver considers memory used for caches to be free, but if a large
@@ -56,6 +56,7 @@ static int lowmem_adj[6] = {
 	1,
 	6,
 	12,
+	15,
 };
 static int lowmem_adj_size = 4;
 static int lowmem_minfree[6] = {
@@ -149,6 +150,10 @@ void tune_lmk_zone_param(struct zonelist *zonelist, int classzone_idx,
 	}
 }
 
+static struct task_struct *pick_next_from_adj_tree(struct task_struct *task);
+static struct task_struct *pick_first_task(void);
+static struct task_struct *pick_last_task(void);
+
 void tune_lmk_param(int *other_free, int *other_file, gfp_t gfp_mask)
 {
 	struct zone *preferred_zone;
@@ -202,13 +207,19 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 	int rem = 0;
 	int tasksize;
 	int i;
-	int min_score_adj = OOM_SCORE_ADJ_MAX + 1;
+	int min_adj = OOM_SCORE_ADJ_MAX + 1;
 	int selected_tasksize = 0;
-	int selected_oom_score_adj;
+	int selected_oom_adj;
 	int array_size = ARRAY_SIZE(lowmem_adj);
 	int other_free;
 	int other_file;
-
+	
+	tsk = current->group_leader;
+	if ((tsk->flags & PF_EXITING) && test_task_flag(tsk, TIF_MEMDIE)) {
+		set_tsk_thread_flag(current, TIF_MEMDIE);
+		return 0;
+	}
+	
 	if (nr_to_scan > 0) {
 		if (mutex_lock_interruptible(&scan_mutex) < 0)
 			return 0;
@@ -227,19 +238,19 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 	for (i = 0; i < array_size; i++) {
 		if (other_free < lowmem_minfree[i] &&
 		    other_file < lowmem_minfree[i]) {
-			min_score_adj = lowmem_adj[i];
+			min_adj = lowmem_adj[i];
 			break;
 		}
 	}
 	if (nr_to_scan > 0)
 		lowmem_print(3, "lowmem_shrink %d, %x, ofree %d %d, ma %d\n",
 				nr_to_scan, gfp_mask, other_free,
-				other_file, min_score_adj);
+				other_file, min_adj);
 	rem = global_page_state(NR_ACTIVE_ANON) +
 		global_page_state(NR_ACTIVE_FILE) +
 		global_page_state(NR_INACTIVE_ANON) +
 		global_page_state(NR_INACTIVE_FILE);
-	if (nr_to_scan <= 0 || min_score_adj == OOM_SCORE_ADJ_MAX + 1) {
+	if (nr_to_scan <= 0 || min_adj == OOM_SCORE_ADJ_MAX + 1) {
 		lowmem_print(5, "lowmem_shrink %d, %x, return %d\n",
 			     nr_to_scan, gfp_mask, rem);
 
@@ -248,12 +259,14 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 
 		return rem;
 	}
-	selected_oom_score_adj = min_score_adj;
+	selected_oom_adj = min_adj;
 
 	rcu_read_lock();
-	for_each_process(tsk) {
+	for (tsk = pick_first_task();
+		tsk != pick_last_task();
+		tsk = pick_next_from_adj_tree(tsk)) {
 		struct task_struct *p;
-		int oom_score_adj;
+		int oom_adj;
 
 		if (tsk->flags & PF_KTHREAD)
 			continue;
@@ -266,7 +279,10 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 			if (test_task_flag(tsk, TIF_MEMDIE)) {
 				rcu_read_unlock();
 				/* give the system time to free up the memory */
-				msleep_interruptible(20);
+				if (!same_thread_group(current, tsk))
+					msleep_interruptible(20);
+				else
+					set_tsk_thread_flag(current, TIF_MEMDIE);
 				mutex_unlock(&scan_mutex);
 				return 0;
 			}
@@ -276,32 +292,42 @@ static int lowmem_shrink(struct shrinker *s, int nr_to_scan, gfp_t gfp_mask)
 		if (!p)
 			continue;
 
-		oom_score_adj = p->signal->oom_adj;
-		if (oom_score_adj < min_score_adj) {
+		oom_adj = p->signal->oom_adj;
+		if (oom_adj < min_adj) {
+			task_unlock(p);
+			break;
+		}
+		
+		
+		if (fatal_signal_pending(p) ||
+			((p->flags & PF_EXITING) &&
+			test_tsk_thread_flag(p, TIF_MEMDIE))) {
+			lowmem_print(2, "skip slow dying process %d\n", p->pid);
 			task_unlock(p);
 			continue;
 		}
+		
 		tasksize = get_mm_rss(p->mm);
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
 		if (selected) {
-			if (oom_score_adj < selected_oom_score_adj)
-				continue;
-			if (oom_score_adj == selected_oom_score_adj &&
+			if (oom_adj < selected_oom_adj)
+				break;
+			if (oom_adj == selected_oom_adj &&
 			    tasksize <= selected_tasksize)
 				continue;
 		}
 		selected = p;
 		selected_tasksize = tasksize;
-		selected_oom_score_adj = oom_score_adj;
+		selected_oom_adj = oom_adj;
 		lowmem_print(2, "select %d (%s), adj %d, size %d, to kill\n",
-			     p->pid, p->comm, oom_score_adj, tasksize);
+			     p->pid, p->comm, oom_adj, tasksize);
 	}
 	if (selected) {
 		lowmem_print(1, "send sigkill to %d (%s), adj %d, size %d\n",
 			     selected->pid, selected->comm,
-			     selected_oom_score_adj, selected_tasksize);
+			     selected_oom_adj, selected_tasksize);
 		lowmem_deathpending_timeout = jiffies + HZ;
 		send_sig(SIGKILL, selected, 0);
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
@@ -332,6 +358,81 @@ static int __init lowmem_init(void)
 static void __exit lowmem_exit(void)
 {
 	unregister_shrinker(&lowmem_shrinker);
+}
+
+DEFINE_SPINLOCK(lmk_lock);
+struct rb_root tasksadj = RB_ROOT;
+void add_2_adj_tree(struct task_struct *task)
+{		struct rb_node **link = &tasksadj.rb_node;
+struct rb_node *parent = NULL;
+struct task_struct *task_entry;
+s64 key = task->signal->oom_adj;
+/*
+ * Find the right place in the rbtree:
+ */
+spin_lock(&lmk_lock);
+while (*link) {
+	parent = *link;
+	task_entry = rb_entry(parent, struct task_struct, adj_node);
+	if (key < task_entry->signal->oom_adj)
+		link = &parent->rb_right;
+	else
+		link = &parent->rb_left;
+}
+
+rb_link_node(&task->adj_node, parent, link);
+rb_insert_color(&task->adj_node, &tasksadj);
+spin_unlock(&lmk_lock);
+}
+
+void delete_from_adj_tree(struct task_struct *task)
+{
+	spin_lock(&lmk_lock);
+	rb_erase(&task->adj_node, &tasksadj);
+	spin_unlock(&lmk_lock);
+}
+
+
+static struct task_struct *pick_next_from_adj_tree(struct task_struct *task)
+{
+	struct rb_node *next;
+	
+	spin_lock(&lmk_lock);
+	next = rb_next(&task->adj_node);
+	spin_unlock(&lmk_lock);
+	
+	if (!next)
+		return NULL;
+	
+	return rb_entry(next, struct task_struct, adj_node);
+}
+
+static struct task_struct *pick_first_task(void)
+{
+	struct rb_node *left;
+	
+	spin_lock(&lmk_lock);
+	left = rb_first(&tasksadj);
+	spin_unlock(&lmk_lock);
+	
+	if (!left)
+		return NULL;
+	
+	return rb_entry(left, struct task_struct, adj_node);
+}
+
+static struct task_struct *pick_last_task(void)
+{
+	struct rb_node *right;
+	
+	spin_lock(&lmk_lock);
+	right = rb_last(&tasksadj);
+	spin_unlock(&lmk_lock);
+	
+	if (!right)
+		return NULL;
+	
+	return rb_entry(right, struct task_struct, adj_node);
 }
 
 module_param_named(cost, lowmem_shrinker.seeks, int, S_IRUGO | S_IWUSR);

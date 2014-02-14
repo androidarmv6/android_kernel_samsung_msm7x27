@@ -67,6 +67,7 @@ static void __unhash_process(struct task_struct *p, bool group_dead)
 		detach_pid(p, PIDTYPE_SID);
 
 		list_del_rcu(&p->tasks);
+		delete_from_adj_tree(p);
 		list_del_init(&p->sibling);
 		__get_cpu_var(process_counts)--;
 	}
