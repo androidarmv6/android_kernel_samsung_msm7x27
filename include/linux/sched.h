@@ -1224,6 +1224,7 @@ struct task_struct {
 #endif
 
 	struct list_head tasks;
+	struct rb_node adj_node;
 	struct plist_node pushable_tasks;
 
 	struct mm_struct *mm, *active_mm;
@@ -1551,6 +1552,9 @@ static inline struct pid *task_tgid(struct task_struct *task)
 {
 	return task->group_leader->pids[PIDTYPE_PID].pid;
 }
+
+extern void add_2_adj_tree(struct task_struct *task);
+extern void delete_from_adj_tree(struct task_struct *task);
 
 /*
  * Without tasklist or rcu lock it is not safe to dereference
