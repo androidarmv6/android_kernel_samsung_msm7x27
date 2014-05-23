@@ -4,13 +4,10 @@ config CPU_FREQ
 	  CPU Frequency scaling allows you to change the clock speed of 
 	  CPUs on the fly. This is a nice method to save power, because 
 	  the lower the CPU clock speed, the less power the CPU consumes.
-
 	  Note that this driver doesn't automatically change the CPU
 	  clock speed, you need to either enable a dynamic cpufreq governor
 	  (see below) after boot, or use a userspace tool.
-
 	  For details, take a look at <file:Documentation/cpu-freq>.
-
 	  If in doubt, say N.
 
 if CPU_FREQ
@@ -25,7 +22,6 @@ config CPU_FREQ_DEBUG
 	  debugging. You will need to activate it via the kernel
 	  command line by passing
 	     cpufreq.debug=<value>
-
 	  To get <value>, add 
 	       1 to activate CPUfreq core debugging,
 	       2 to activate CPUfreq drivers debugging, and
@@ -38,10 +34,8 @@ config CPU_FREQ_STAT
 	help
 	  This driver exports CPU frequency statistics information through sysfs
 	  file system.
-
 	  To compile this driver as a module, choose M here: the
 	  module will be called cpufreq_stats.
-
 	  If in doubt, say N.
 
 config CPU_FREQ_STAT_DETAILS
@@ -50,7 +44,6 @@ config CPU_FREQ_STAT_DETAILS
 	help
 	  This will show detail CPU frequency translation table in sysfs file
 	  system.
-
 	  If in doubt, say N.
 
 choice
@@ -124,6 +117,22 @@ config CPU_FREQ_DEFAULT_GOV_SMARTASS2
 	help
 		Use the CPUFreq governor 'smartassV2' as default.
 
+config CPU_FREQ_DEFAULT_GOV_SMARTASSH3
+	bool "smartassH3"
+	select CPU_FREQ_GOV_SMARTASSH3
+	help
+		Use the CPUFreq governor 'SmartassH3' as default.
+		
+config CPU_FREQ_DEFAULT_GOV_ZENX
+	bool "ZenX"
+	select CPU_FREQ_GOV_ZENX
+	help
+	Use the CPUFreq governor 'ZenX' as default.
+
+config CPU_FREQ_DEFAULT_GOV_PEGASUSQ
+	bool "pegasusq"
+	select CPU_FREQ_GOV_PEGASUSQ	
+
 config CPU_FREQ_DEFAULT_GOV_INTERACTIVE
   	bool "interactive"
 	select CPU_FREQ_GOV_INTERACTIVE
@@ -162,7 +171,7 @@ config CPU_FREQ_DEFAULT_GOV_MINMAX
 	  frequency jumps does by the governor. This is aimed at maximizing
 	  both perfomance and battery life.
 
-+config CPU_FREQ_DEFAULT_GOV_LULZACTIVE
+config CPU_FREQ_DEFAULT_GOV_LULZACTIVE
 	bool "lulzactive"
 	select CPU_FREQ_GOV_LULZACTIVE
 	select CPU_FREQ_GOV_PERFORMANCE
@@ -188,7 +197,7 @@ config CPU_FREQ_DEFAULT_GOV_ONDEMANDX
   	help
     	  Use the CPUFreq governor 'ondemand' as default. This allows
     	  you to get a full dynamic frequency capable system by simply
-   	  loading your cpufreq low-level hardware driver.
+		  loading your cpufreq low-level hardware driver.
     	  Be aware that not all cpufreq drivers support the ondemand
     	  governor. If unsure have a look at the help section of the
     	  driver. Fallback governor will be the performance governor.
@@ -201,6 +210,27 @@ config CPU_FREQ_DEFAULT_GOV_LAZY
         select CPU_FREQ_GOV_PERFORMANCE
         help
           Use the CPUFreq governor 'lazy' as default.
+		  
+config CPU_FREQ_DEFAULT_GOV_GALAXYICS
+		bool "galaxyics"
+		select CPU_FREQ_GOV_GALAXYICS
+		help
+		Use the CPUFreq governor 'galaxyics' as default. This allows
+		you to get a full dynamic cpu frequency capable system by simply
+		loading your cpufreq low-level hardware driver, using the
+		'galaxyics' governor optimized for GalaxyICS devices.
+		
+config CPU_FREQ_DEFAULT_GOV_BADASS
+		bool "badass"
+		select CPU_FREQ_GOV_BADASS
+		select CPU_FREQ_GOV_PERFORMANCE
+		help
+		Use the CPUFreq governor 'badass' as default. This allows
+		you to get a full dynamic frequency capable system by simply
+		loading your cpufreq low-level hardware driver.
+		Be aware that not all cpufreq drivers support the badass
+		governor. If unsure have a look at the help section of the
+		driver. Fallback governor will be the performance governor. 		
 
 endchoice
 
@@ -209,10 +239,8 @@ config CPU_FREQ_GOV_PERFORMANCE
 	help
 	  This cpufreq governor sets the frequency statically to the
 	  highest available CPU frequency.
-
 	  To compile this driver as a module, choose M here: the
 	  module will be called cpufreq_performance.
-
 	  If in doubt, say Y.
 
 config CPU_FREQ_GOV_POWERSAVE
@@ -220,10 +248,8 @@ config CPU_FREQ_GOV_POWERSAVE
 	help
 	  This cpufreq governor sets the frequency statically to the
 	  lowest available CPU frequency.
-
 	  To compile this driver as a module, choose M here: the
 	  module will be called cpufreq_powersave.
-
 	  If in doubt, say Y.
 
 config CPU_FREQ_GOV_USERSPACE
@@ -233,12 +259,9 @@ config CPU_FREQ_GOV_USERSPACE
 	  CPU frequency manually or when a userspace program shall
 	  be able to set the CPU dynamically, like on LART 
 	  <http://www.lartmaker.nl/>.
-
 	  To compile this driver as a module, choose M here: the
 	  module will be called cpufreq_userspace.
-
 	  For details, take a look at <file:Documentation/cpu-freq/>.
-
 	  If in doubt, say Y.
 
 config CPU_FREQ_GOV_ONDEMAND
@@ -251,12 +274,9 @@ config CPU_FREQ_GOV_ONDEMAND
 	  The support for this governor depends on CPU capability to
 	  do fast frequency switching (i.e, very low latency frequency
 	  transitions). 
-
 	  To compile this driver as a module, choose M here: the
 	  module will be called cpufreq_ondemand.
-
 	  For details, take a look at linux/Documentation/cpu-freq.
-
 	  If in doubt, say N.
 
 config CPU_FREQ_GOV_CONSERVATIVE
@@ -268,18 +288,14 @@ config CPU_FREQ_GOV_CONSERVATIVE
 	  its optimisation for better suitability in a battery powered
 	  environment.  The frequency is gracefully increased and decreased
 	  rather than jumping to 100% when speed is required.
-
 	  If you have a desktop machine then you should really be considering
 	  the 'ondemand' governor instead, however if you are using a laptop,
 	  PDA or even an AMD64 based computer (due to the unacceptable
 	  step-by-step latency issues between the minimum and maximum frequency
 	  transitions in the CPU) you will probably want to use this governor.
-
 	  To compile this driver as a module, choose M here: the
 	  module will be called cpufreq_conservative.
-
 	  For details, take a look at linux/Documentation/cpu-freq.
-
 	  If in doubt, say N.
 
 config CPU_FREQ_GOV_SMARTASS2
@@ -289,6 +305,26 @@ config CPU_FREQ_GOV_SMARTASS2
 		'smartassV2' - a "smart" governor
 		If in doubt, say N.
 
+config CPU_FREQ_GOV_SMARTASSH3
+	tristate "'SmartassH3' cpufreq governor"
+	depends on CPU_FREQ
+	help
+		'SmartassH3' - a "smartassV2 with tweaks by H3ROS" governor.
+		If in doubt, say N.
+
+config CPU_FREQ_GOV_ZENX
+	tristate "'ZenX' cpufreq governor"
+	depends on CPU_FREQ
+	help
+		'ZenX' - an interactive-based governor
+		This governor provides full CPU hotplugging support
+		based on average CPU load across all CPUs.
+		For details, take a look at linux/Documentation/cpu-freq.
+		If in doubt, say N
+
+config CPU_FREQ_GOV_PEGASUSQ
+	tristate "'pegasusq' cpufreq policy governor"		
+		
 config CPU_FREQ_GOV_INTERACTIVE
 	tristate "'interactive' cpufreq policy governor"
 	depends on CPU_FREQ
@@ -314,7 +350,6 @@ config CPU_FREQ_GOV_SCARY
 	depends on CPU_FREQ
 	help
 		scary - a governor for cabbages
-
 		If in doubt, say N.
 
 config CPU_FREQ_GOV_SMARTASS
@@ -330,10 +365,9 @@ config CPU_FREQ_GOV_MINMAX
 	  'minmax' - this driver tries to minimize the frequency jumps by limiting
 	  the the selected frequencies to either the min or the max frequency of
 	  the policy. The frequency is selected according to the load.
-
 	  If in doubt, say N.
 
-+config CPU_FREQ_GOV_LULZACTIVE
+config CPU_FREQ_GOV_LULZACTIVE
 	tristate "'lulzactive' cpufreq governor"
 	depends on CPU_FREQ
 	help
@@ -348,12 +382,9 @@ config CPU_FREQ_GOV_LAGFREE
           its optimisation for better suitability in a battery powered
           environment.  The frequency is gracefully increased and decreased
           rather than jumping to 100% when speed is required.
-
           To compile this driver as a module, choose M here: the
           module will be called cpufreq_lagfree.
-
           For details, take a look at linux/Documentation/cpu-freq.
-
           If in doubt, say N.
 
 config CPU_FREQ_GOV_ONDEMANDX
@@ -366,12 +397,9 @@ config CPU_FREQ_GOV_ONDEMANDX
   	  The support for this governor depends on CPU capability to
   	  do fast frequency switching (i.e, very low latency frequency
   	  transitions).
-
   	  To compile this driver as a module, choose M here: the
   	  module will be called cpufreq_ondemand.
-
   	  For details, take a look at linux/Documentation/cpu-freq.
- 
   	  If in doubt, say N.
 
 config CPU_FREQ_GOV_ONDEMANDX_INPUT
@@ -390,13 +418,84 @@ config CPU_FREQ_MIN_TICKS
 	int "Ticks between governor polling interval."
 	default 10
 	help
-	  Minimum number of ticks between polling interval for governors.
+		Minimum number of ticks between polling interval for governors.
 
 config CPU_FREQ_SAMPLING_LATENCY_MULTIPLIER
 	int "Sampling rate multiplier for governors."
 	default 1000
 	help
-	  Sampling latency rate multiplied by the cpu switch latency.
-	  Affects governor polling.
+		Sampling latency rate multiplied by the cpu switch latency.
+		Affects governor polling.
+	  
+config CPU_FREQ_GOV_GALAXYICS
+	tristate "'galaxyics' cpufreq governor"
+	help
+		'galaxyics' - This driver adds a dynamic cpufreq policy governor
+		optimized for GalaxyICS devices.
+		To compile this driver as a module, choose M here: the
+		module will be called cpufreq_galaxyics.
+		For details, take a look at linux/Documentation/cpu-freq.
+		If in doubt, say N.
+		
+config CPU_FREQ_GOV_BADASS
+	tristate "'badass' cpufreq policy governor"
+	select CPU_FREQ_TABLE
+		help
+		'badass' - This driver adds a dynamic cpufreq policy governor.
+		The governor does a periodic polling and
+		changes frequency based on the CPU utilization.
+		The support for this governor depends on CPU capability to
+		do fast frequency switching (i.e, very low latency frequency
+		transitions).
+		To compile this driver as a module, choose M here: the
+		module will be called cpufreq_badass.
+		If in doubt, say N.
+
+config CPU_FREQ_GOV_BADASS_2_PHASE
+	tristate "'2-phase' power-efficiency badass algorithm"
+	depends on CPU_FREQ_GOV_BADASS
+	help
+	  '2-phase' - This driver adds a new algo to save power
+
+config CPU_FREQ_GOV_BADASS_2_PHASE_FREQ
+	int "'2-phase' badass frequency"
+	default 768000
+	depends on CPU_FREQ_GOV_BADASS
+	depends on CPU_FREQ_GOV_BADASS_2_PHASE
+
+config CPU_FREQ_GOV_BADASS_3_PHASE
+	tristate "'3-phase' power-efficiency badass algorithm"
+	depends on CPU_FREQ_GOV_BADASS
+	depends on CPU_FREQ_GOV_BADASS_2_PHASE
+	help
+	  '3-phase' - This driver adds a new algo to save power
+
+config CPU_FREQ_GOV_BADASS_3_PHASE_FREQ
+	int "'3-phase' badass frequency"
+	default 825000
+	depends on CPU_FREQ_GOV_BADASS
+	depends on CPU_FREQ_GOV_BADASS_2_PHASE
+	depends on CPU_FREQ_GOV_BADASS_3_PHASE
+
+config CPU_FREQ_GOV_BADASS_GPU_CONTROL
+	tristate "'gpu_control' power-efficiency badass algorithm"
+	depends on CPU_FREQ_GOV_BADASS
+	depends on CPU_FREQ_GOV_BADASS_2_PHASE
+	help
+	  'gpu_control' - This driver adds a new algo to save power
+
+config CPU_FREQ_GOV_BADASS_LOWBAT_POWERSAVE
+	tristate "'lowbat_powersave' power-efficiency badass algorithm"
+	depends on CPU_FREQ_GOV_BADASS
+	help
+	  'lowbat_powersave' - This driver adds a new algo to save power
+
+config CPU_FREQ_GOV_BADASS_ALLOW_BYPASS
+	tristate "Allows bypassing phases"
+	depends on CPU_FREQ_GOV_BADASS
+	depends on CPU_FREQ_GOV_BADASS_2_PHASE
+	help
+	  'allow_bypass' - This driver adds a bypass to the phases
+		
 
 endif	# CPU_FREQ
