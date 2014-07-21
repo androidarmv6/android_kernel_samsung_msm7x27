@@ -221,6 +221,15 @@ config 800MHZ
 	help
 	  Support for the only cooper & gio board.
 	  
+
+config MTD_SWAP_USERPARTITIONS
+	bool "Swap /system and /userdata partition mapping via ATAG layout"
+	depends on MSM_SMD
+	default n
+	help
+	  This hack will swap the /system and /userdata partition mapping that is parsed from ATAG. Useful for devices that cannot
+	  be safely repartitioned.
+
 config MACH_TROUT
 	depends on ARCH_MSM7X01A
 	depends on MSM_STACKED_MEMORY
