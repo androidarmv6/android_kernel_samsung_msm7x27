@@ -85,6 +85,17 @@ static int __init parse_tag_msm_partition(const struct tag *tag)
 		ptn->offset = entry->offset;
 		ptn->size = entry->size;
 
+#ifdef CONFIG_MTD_ANDROID_WHITELIST
+		/* Write-protect all partitions except those needed for Android userspace */
+		if ((!strncmp(entry->name, "boot", 5) == 0) &&
+		   (!strncmp(entry->name, "cache", 6) == 0) &&
+		   (!strncmp(entry->name, "recovery", 9) == 0) &&
+		   (!strncmp(entry->name, "system", 7) == 0) &&
+		   (!strncmp(entry->name, "userdata", 9) == 0)) {
+			ptn->mask_flags = MTD_WRITEABLE;
+		}
+#endif
+
 		printk(KERN_INFO "Partition (from atag) %s "
 				"-- Offset:%llx Size:%llx\n",
 				ptn->name, ptn->offset, ptn->size);

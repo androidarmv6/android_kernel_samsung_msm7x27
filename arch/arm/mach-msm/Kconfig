@@ -230,6 +230,14 @@ config MTD_SWAP_USERPARTITIONS
 	  This hack will swap the /system and /userdata partition mapping that is parsed from ATAG. Useful for devices that cannot
 	  be safely repartitioned.
 
+config MTD_ANDROID_WHITELIST
+	bool "Enable MTD partition whitelist for Android devices"
+	depends on MSM_SMD
+	default n
+	help
+	  This will enable a whitelist for user partitions (boot, cache, recovery, system and userdata), and write-protect all other
+	  partitions, to minimize risk of accidental damage to the device.
+
 config MACH_TROUT
 	depends on ARCH_MSM7X01A
 	depends on MSM_STACKED_MEMORY
