@@ -2592,6 +2592,7 @@ static inline unsigned long rlimit_max(unsigned int limit)
 
 #endif
 
+#if 0
 //{{ Add GAForensic - 1/2
 /*
  *  Add GAForensic information 
@@ -2694,4 +2695,4 @@ static struct GAForensicINFO{
 		.list_head_struct_prev=offsetof(struct list_head, prev)
 	   };
 //}} Add GAForensic - 1/2
-
+#endif
