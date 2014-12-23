@@ -153,6 +153,7 @@ static int log_buf_len = __LOG_BUF_LEN;
 static unsigned logged_chars; /* Number of chars produced since last read+clear operation */
 static int saved_console_loglevel = -1;
 
+#if 0
 /* Mark for GetLog */
 
 struct struct_kernel_log_mark {
@@ -175,6 +176,7 @@ static struct struct_kernel_log_mark kernel_log_mark = {
 	.p__log_buf = __log_buf,
 #endif	// CONFIG_MACH_CALLISTO
 };
+#endif
 
 #ifdef CONFIG_KEXEC
 /*
@@ -230,6 +232,7 @@ static int __init log_buf_len_setup(char *str)
 		printk(KERN_NOTICE "log_buf_len: %d\n", log_buf_len);
 	}
 out:
+#if 0
 	/* Mark for GetLog */
 #if defined(CONFIG_MACH_EUROPA)
 	kernel_log_mark.p__log_buf = __log_buf+0x200000;
@@ -237,6 +240,7 @@ out:
 #if defined(CONFIG_MACH_CALLISTO) || defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_GIO) || defined(CONFIG_MACH_BENI) || defined(CONFIG_MACH_TASS) || defined(CONFIG_MACH_TASSDT) || defined(CONFIG_MACH_LUCAS)
 	kernel_log_mark.p__log_buf = __log_buf;
 #endif	// CONFIG_MACH_CALLISTO
+#endif
 	return 1;
 }
 
