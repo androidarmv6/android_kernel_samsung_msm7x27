@@ -468,7 +468,7 @@ unsigned int board_hw_revision;
 #endif
 
 #if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_TASS)
-char Sales_Code[3];
+char Sales_Code[4];
 #endif
 /* Check for early params. */
 static int __init do_early_param(char *param, char *val)
@@ -590,9 +590,12 @@ static int __init do_early_param(char *param, char *val)
 #if defined(CONFIG_MACH_COOPER) || defined(CONFIG_MACH_TASS)
 	if ( (strcmp(param, "salescode") == 0 ) )
 	{
-		memset(Sales_Code,0x00,sizeof(Sales_Code));
-		memcpy(Sales_Code,val,3);
+		Sales_Code[0] = val[0];
+		Sales_Code[1] = val[1];
+		Sales_Code[2] = val[2];
+		Sales_Code[3] = 0; // null terminator
 		printk("Sexykyu Salescode : %s\n",Sales_Code);
+
 	}
 #endif
 
